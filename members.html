@@ -40,7 +40,34 @@
     <button class="search-btn">
         Search
     </button>
+<button id="add-member-btn">Add</button>
 </div>
+
+<!-- Dialog -->
+<dialog id="add-member-dialog">
+  <form method="dialog" id="member-form">
+    <h2>Add Gym Member</h2>
+
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" placeholder="Enter full name" required><br><br>
+
+    <label for="number">Contact Number:</label>
+    <input type="text" id="number" name="number" placeholder="Enter number" inputmode="numeric" pattern="\d*" required><br><br>
+
+    <label for="membership">Membership Type:</label>
+    <select id="membership" name="membership">
+      <option value="walk-in">Walk-In</option>
+      <option value="monthly">Monthly</option>
+      <option value="annual">Annual</option>
+    </select><br><br>
+
+    <menu>
+      <button type="submit" id="submit-btn">Add Member</button>
+      <button type="button" id="cancel-btn">Cancel</button>
+    </menu>
+  </form>
+</dialog>
+
 
 <!-- Table Container -->
 <div class="members-table">
