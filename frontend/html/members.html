@@ -73,6 +73,7 @@
               <th>Email</th>
               <th>Phone</th>
               <th>Membership Type</th>
+              <th>Coach</th>
               <th>Status</th>
               <th>Join Date</th>
               <th>Expiration Date</th>
@@ -109,6 +110,8 @@
               <option value="Trial">Trial (1 day)</option>
               <option value="Monthly">Monthly (30 days)</option>
               <option value="Annual">Annual (365 days)</option>
+              <option value="Monthly with Coach">Monthly with Coach (30 days)</option>
+              <option value="Annual with Coach">Annual with Coach (365 days)</option>
             </select>
             <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
               <span id="membershipTypeHint">Choose a membership type to see required fields</span>
@@ -164,6 +167,26 @@
       </div>
     </div>
 
+    <!-- Choose Coach Modal -->
+    <div id="coachModal" class="modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2>Choose a Coach</h2>
+          <span class="close" onclick="closeCoachModal()">&times;</span>
+        </div>
+        <div class="coach-selection-info">
+          <p><strong>Member:</strong> <span id="coachSelectionMemberName"></span></p>
+          <p><strong>Membership:</strong> <span id="coachSelectionMembershipType"></span></p>
+        </div>
+        <div id="coachList" class="coach-list">
+          <div style="text-align: center; padding: 40px;">
+            <i class="ph ph-spinner ph-spin" style="font-size: 32px;"></i>
+            <p>Loading coaches...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
       <div class="modal-content">
@@ -180,6 +203,7 @@
             <h3>Membership Summary</h3>
             <p><strong>Member:</strong> <span id="paymentSummaryName"></span></p>
             <p><strong>Membership Type:</strong> <span id="paymentSummaryType"></span></p>
+            <p><strong>Coach:</strong> <span id="paymentSummaryCoach">N/A</span></p>
             <p><strong>Amount:</strong> <span id="paymentSummaryAmount"></span></p>
           </div>
 

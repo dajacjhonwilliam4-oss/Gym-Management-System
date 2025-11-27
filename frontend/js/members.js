@@ -5,6 +5,9 @@ let showPaymentAfterCreate = false;
 let createdMemberData = null;
 let allMembers = [];
 let currentUser = null;
+let allCoaches = [];
+let selectedCoachId = null;
+let selectedCoachName = null;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
@@ -99,7 +102,8 @@ function displayMembers(members) {
             <td>${escapeHtml(member.name)}</td>
             <td>${escapeHtml(member.email || 'N/A')}</td>
             <td>${escapeHtml(member.phone)}</td>
-            <td><span class="badge badge-${member.membershipType?.toLowerCase()}">${escapeHtml(member.membershipType || 'N/A')}</span></td>
+            <td><span class="badge badge-${member.membershipType?.toLowerCase().replace(/ /g, '-')}">${escapeHtml(member.membershipType || 'N/A')}</span></td>
+            <td>${escapeHtml(member.coachName || 'N/A')}</td>
             <td><span class="status-badge status-${displayStatus}">${escapeHtml(displayStatus || 'active')}</span></td>
             <td>${formatDate(member.joinDate)}</td>
             <td>${member.expirationDate ? formatDate(member.expirationDate) : 'N/A'}</td>
@@ -152,7 +156,8 @@ function searchMembers() {
         return member.name.toLowerCase().includes(searchTerm) ||
                member.email.toLowerCase().includes(searchTerm) ||
                member.phone.toLowerCase().includes(searchTerm) ||
-               (member.membershipType && member.membershipType.toLowerCase().includes(searchTerm));
+               (member.membershipType && member.membershipType.toLowerCase().includes(searchTerm)) ||
+               (member.coachName && member.coachName.toLowerCase().includes(searchTerm));
     });
 
     displayMembers(filtered);
@@ -185,6 +190,10 @@ function setupModal() {
         const paymentModal = document.getElementById('paymentModal');
         if (event.target == paymentModal) {
             closePaymentModal();
+        }
+        const coachModal = document.getElementById('coachModal');
+        if (event.target == coachModal) {
+            closeCoachModal();
         }
     };
 
@@ -265,6 +274,40 @@ function handleMembershipTypeChange() {
         // Update hint
         membershipTypeHint.textContent = '✓ Annual membership - Full registration required';
         membershipTypeHint.style.color = '#e65100';
+        
+        // Show fields with animation
+        showFieldWithAnimation(emailField);
+        showFieldWithAnimation(passwordField);
+        showFieldWithAnimation(addressField);
+        showFieldWithAnimation(emergencyField);
+        hideFieldWithAnimation(statusField);
+        
+        // Make fields required
+        emailInput.required = true;
+        passwordInput.required = true;
+        addressInput.required = true;
+        
+    } else if (membershipType === 'Monthly with Coach') {
+        // Update hint
+        membershipTypeHint.textContent = '✓ Monthly with Coach - Full registration + coach selection';
+        membershipTypeHint.style.color = '#1976d2';
+        
+        // Show fields with animation
+        showFieldWithAnimation(emailField);
+        showFieldWithAnimation(passwordField);
+        showFieldWithAnimation(addressField);
+        showFieldWithAnimation(emergencyField);
+        hideFieldWithAnimation(statusField);
+        
+        // Make fields required
+        emailInput.required = true;
+        passwordInput.required = true;
+        addressInput.required = true;
+        
+    } else if (membershipType === 'Annual with Coach') {
+        // Update hint
+        membershipTypeHint.textContent = '✓ Annual with Coach - Full registration + coach selection';
+        membershipTypeHint.style.color = '#d32f2f';
         
         // Show fields with animation
         showFieldWithAnimation(emailField);
@@ -457,10 +500,18 @@ async function saveMember() {
         closeMemberModal();
         await loadMembers(); // Reload the list
 
-        // Show payment modal for Monthly or Annual memberships (only for new members)
-        if (!memberId && (membershipType === 'Monthly' || membershipType === 'Annual')) {
+        // Handle post-creation workflow for new members only
+        if (!memberId) {
             createdMemberData = savedMember;
-            openPaymentModal(savedMember);
+            
+            // Check if membership requires coach selection
+            if (membershipType === 'Monthly with Coach' || membershipType === 'Annual with Coach') {
+                // Load coaches and show coach selection modal
+                await openCoachSelectionModal(savedMember);
+            } else if (membershipType === 'Monthly' || membershipType === 'Annual') {
+                // Show payment modal directly for non-coach memberships
+                openPaymentModal(savedMember);
+            }
         }
     } catch (error) {
         console.error('Error saving member:', error);
@@ -555,15 +606,22 @@ function openPaymentModal(member) {
     // Set display values
     document.getElementById('paymentSummaryName').textContent = member.name;
     document.getElementById('paymentSummaryType').textContent = member.membershipType;
+    document.getElementById('paymentSummaryCoach').textContent = member.coachName || 'N/A';
     
     // Set suggested amount based on membership type
     let suggestedAmount = 0;
     if (member.membershipType === 'Monthly') {
-        suggestedAmount = 50.00; // Example price
+        suggestedAmount = 50.00;
         document.getElementById('paymentSummaryAmount').textContent = '$50.00 (suggested)';
     } else if (member.membershipType === 'Annual') {
-        suggestedAmount = 500.00; // Example price
+        suggestedAmount = 500.00;
         document.getElementById('paymentSummaryAmount').textContent = '$500.00 (suggested)';
+    } else if (member.membershipType === 'Monthly with Coach') {
+        suggestedAmount = 100.00;
+        document.getElementById('paymentSummaryAmount').textContent = '$100.00 (suggested)';
+    } else if (member.membershipType === 'Annual with Coach') {
+        suggestedAmount = 1000.00;
+        document.getElementById('paymentSummaryAmount').textContent = '$1000.00 (suggested)';
     }
     
     document.getElementById('paymentAmount').value = suggestedAmount;
@@ -625,5 +683,132 @@ async function processPayment() {
     } catch (error) {
         console.error('Error processing payment:', error);
         showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+// Coach Selection Modal Functions
+async function openCoachSelectionModal(member) {
+    const modal = document.getElementById('coachModal');
+    
+    // Set member info
+    document.getElementById('coachSelectionMemberName').textContent = member.name;
+    document.getElementById('coachSelectionMembershipType').textContent = member.membershipType;
+    
+    // Store member data for later use
+    createdMemberData = member;
+    selectedCoachId = null;
+    selectedCoachName = null;
+    
+    // Load coaches
+    await loadCoaches();
+    
+    modal.style.display = 'block';
+}
+
+function closeCoachModal() {
+    document.getElementById('coachModal').style.display = 'none';
+}
+
+async function loadCoaches() {
+    try {
+        const response = await authenticatedFetch('/api/coaches');
+        
+        if (!response.ok) {
+            throw new Error('Failed to load coaches');
+        }
+
+        allCoaches = await response.json();
+        displayCoachesForSelection();
+    } catch (error) {
+        console.error('Error loading coaches:', error);
+        document.getElementById('coachList').innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #f44336;">
+                <i class="ph ph-warning" style="font-size: 32px;"></i>
+                <p>Failed to load coaches. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+function displayCoachesForSelection() {
+    const coachList = document.getElementById('coachList');
+    
+    if (allCoaches.length === 0) {
+        coachList.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="ph ph-user" style="font-size: 32px; color: #999;"></i>
+                <p>No coaches available. Please add coaches first.</p>
+            </div>
+        `;
+        return;
+    }
+
+    coachList.innerHTML = allCoaches.map(coach => `
+        <div class="coach-card" onclick="selectCoach('${coach.id}', '${escapeHtml(coach.name)}')">
+            <div class="coach-card-header">
+                <img src="${coach.image || '/images/default-coach.png'}" alt="${escapeHtml(coach.name)}" class="coach-avatar">
+                <div class="coach-info">
+                    <h3>${escapeHtml(coach.name)}</h3>
+                    <p class="coach-specialty">${escapeHtml(coach.specialty || 'General Fitness')}</p>
+                </div>
+            </div>
+            <div class="coach-card-body">
+                <p class="coach-bio">${escapeHtml(coach.bio || 'No bio available')}</p>
+                ${coach.certifications ? `
+                    <div class="coach-certifications">
+                        <strong>Certifications:</strong>
+                        <p>${escapeHtml(coach.certifications)}</p>
+                    </div>
+                ` : ''}
+                ${coach.schedule ? `
+                    <div class="coach-schedule">
+                        <strong><i class="ph ph-calendar"></i> Schedule:</strong>
+                        <p>${escapeHtml(coach.schedule)}</p>
+                    </div>
+                ` : ''}
+            </div>
+            <div class="coach-card-footer">
+                <button class="btn-select-coach">
+                    <i class="ph ph-check-circle"></i> Select This Coach
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function selectCoach(coachId, coachName) {
+    selectedCoachId = coachId;
+    selectedCoachName = coachName;
+    
+    // Update member with selected coach
+    try {
+        const response = await authenticatedFetch(`/api/members/${createdMemberData.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ...createdMemberData,
+                coachId: coachId,
+                coachName: coachName
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to assign coach');
+        }
+        
+        const updatedMember = await response.json();
+        createdMemberData = updatedMember;
+        
+        showMessage(`Coach ${coachName} assigned successfully!`, 'success');
+        closeCoachModal();
+        await loadMembers(); // Reload to show updated coach
+        
+        // Now show payment modal
+        openPaymentModal(updatedMember);
+    } catch (error) {
+        console.error('Error assigning coach:', error);
+        showMessage('Error assigning coach: ' + error.message, 'error');
     }
 }
