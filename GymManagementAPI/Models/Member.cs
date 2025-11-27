@@ -43,6 +43,14 @@ public class Member
     [BsonElement("isTrial")]
     public bool IsTrial { get; set; } = false;
 
+    [BsonElement("coachId")]
+    [BsonIgnoreIfNull]
+    public string? CoachId { get; set; }
+
+    [BsonElement("coachName")]
+    [BsonIgnoreIfNull]
+    public string? CoachName { get; set; }
+
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
