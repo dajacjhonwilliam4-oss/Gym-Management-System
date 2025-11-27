@@ -9,4 +9,5 @@ public interface ICoachService
     Task<Coach> CreateAsync(Coach coach);
     Task<Coach?> UpdateAsync(string id, Coach coach);
     Task<bool> DeleteAsync(string id);
+    Task<long> DeleteAllAsync();
 }

@@ -75,12 +75,13 @@
               <th>Membership Type</th>
               <th>Status</th>
               <th>Join Date</th>
+              <th>Expiration Date</th>
               <th class="admin-only" style="display: none;">Actions</th>
             </tr>
           </thead>
           <tbody id="membersTableBody">
             <tr>
-              <td colspan="8" style="text-align: center; padding: 40px;">
+              <td colspan="9" style="text-align: center; padding: 40px;">
                 <i class="ph ph-spinner ph-spin" style="font-size: 32px;"></i>
                 <p>Loading members...</p>
               </td>
@@ -102,49 +103,50 @@
           <input type="hidden" id="memberId">
           
           <div class="form-group">
+            <label for="membershipType">Membership Type *</label>
+            <select id="membershipType" required>
+              <option value="">Select Membership Type</option>
+              <option value="Trial">Trial (1 day)</option>
+              <option value="Monthly">Monthly (30 days)</option>
+              <option value="Annual">Annual (365 days)</option>
+            </select>
+            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+              <span id="membershipTypeHint">Choose a membership type to see required fields</span>
+            </small>
+          </div>
+
+          <div class="form-group">
             <label for="memberName">Full Name *</label>
-            <input type="text" id="memberName" required>
+            <input type="text" id="memberName" required placeholder="Enter member name">
           </div>
 
           <div class="form-group">
+            <label for="memberPhone">Phone Number *</label>
+            <input type="tel" id="memberPhone" required placeholder="Enter phone number">
+          </div>
+
+          <div class="form-group dynamic-field" id="emailField">
             <label for="memberEmail">Email *</label>
-            <input type="email" id="memberEmail" required>
+            <input type="email" id="memberEmail" required placeholder="Enter email address">
           </div>
 
-          <div class="form-group">
+          <div class="form-group dynamic-field" id="passwordField">
             <label for="memberPassword">Password (for login account) *</label>
             <input type="password" id="memberPassword" required minlength="6" placeholder="Minimum 6 characters">
             <small style="color: #666;">This will create a login account for the member</small>
           </div>
 
-          <div class="form-group">
-            <label for="memberPhone">Phone Number *</label>
-            <input type="tel" id="memberPhone" required>
+          <div class="form-group dynamic-field" id="addressField">
+            <label for="memberAddress">Address *</label>
+            <textarea id="memberAddress" rows="3" placeholder="Enter address"></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="membershipType">Membership Type *</label>
-            <select id="membershipType" required>
-              <option value="">Select Membership</option>
-              <option value="Basic">Basic</option>
-              <option value="Standard">Standard</option>
-              <option value="Premium">Premium</option>
-              <option value="Gold">Gold</option>
-              <option value="Silver">Silver</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="memberAddress">Address</label>
-            <textarea id="memberAddress" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
+          <div class="form-group dynamic-field" id="emergencyField">
             <label for="emergencyContact">Emergency Contact</label>
             <input type="text" id="emergencyContact" placeholder="Name and Phone">
           </div>
 
-          <div class="form-group">
+          <div class="form-group" id="statusField" style="display: none;">
             <label for="memberStatus">Status</label>
             <select id="memberStatus">
               <option value="active">Active</option>
@@ -157,6 +159,55 @@
             <button type="submit" class="btn-primary">
               <span id="submitBtnText">Add Member</span>
             </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Payment Information</h2>
+          <span class="close" onclick="closePaymentModal()">&times;</span>
+        </div>
+        <form id="paymentForm">
+          <input type="hidden" id="paymentMemberId">
+          <input type="hidden" id="paymentMemberName">
+          <input type="hidden" id="paymentMembershipType">
+          
+          <div class="payment-summary">
+            <h3>Membership Summary</h3>
+            <p><strong>Member:</strong> <span id="paymentSummaryName"></span></p>
+            <p><strong>Membership Type:</strong> <span id="paymentSummaryType"></span></p>
+            <p><strong>Amount:</strong> <span id="paymentSummaryAmount"></span></p>
+          </div>
+
+          <div class="form-group">
+            <label for="paymentAmount">Amount *</label>
+            <input type="number" id="paymentAmount" required min="0" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label for="paymentMethod">Payment Method *</label>
+            <select id="paymentMethod" required>
+              <option value="">Select Payment Method</option>
+              <option value="Cash">Cash</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Online Payment">Online Payment</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="paymentNotes">Notes</label>
+            <textarea id="paymentNotes" rows="3" placeholder="Additional payment notes..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closePaymentModal()">Skip</button>
+            <button type="submit" class="btn-primary">Process Payment</button>
           </div>
         </form>
       </div>

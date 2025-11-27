@@ -27,6 +27,24 @@ public class Coach
     [BsonElement("experience")]
     public int? Experience { get; set; }
 
+    [BsonElement("image")]
+    [BsonIgnoreIfNull]
+    public string? Image { get; set; }
+
+    [BsonElement("certifications")]
+    [BsonIgnoreIfNull]
+    [BsonIgnoreIfDefault]
+    public object? Certifications { get; set; }
+
+    [BsonElement("bio")]
+    [BsonIgnoreIfNull]
+    public string? Bio { get; set; }
+
+    [BsonElement("teachingPreferences")]
+    [BsonIgnoreIfNull]
+    [BsonIgnoreIfDefault]
+    public object? TeachingPreferences { get; set; }
+
     [BsonElement("status")]
     public string Status { get; set; } = "active";
 

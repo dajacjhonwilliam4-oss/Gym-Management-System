@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coaches</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/members.css">
+  <link rel="stylesheet" href="/css/coaches.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
 </head>
@@ -37,52 +39,115 @@
 
     <!-- Dashboard Content -->
     <section class="content">
-      <!-- Coach 1 -->
-        <div class="coach-card">
-          <img src="https://via.placeholder.com/90" alt="Coach" class="coach-photo">
-          <h3 class="coach-name">Icy Samonte</h3>
-          <p class="coach-role">Strength</p>
-          <p class="coach-contact">📞
- 0912 345 6789</p>
-          <button class="view-btn">View Profile</button>
-        </div>
 
-        <!-- Coach 2 -->
-        <div class="coach-card">
-          <img src="https://via.placeholder.com/90" alt="Coach" class="coach-photo">
-          <h3 class="coach-name">Eliseo Dioneda</h3>
-          <p class="coach-role">Yoga Instructor</p>
-          <p class="coach-contact">📞
- 0998 123 4567</p>
-          <button class="view-btn">View Profile</button>
-        </div>
+      <div class="page-header">
+        <h2>Coaches Management</h2>
+        <button id="addCoachBtn" class="btn-primary" style="display: none;">
+          <i class="ph ph-plus"></i> Add Coach
+        </button>
+      </div>
 
-        <!-- Coach 3 -->
-        <div class="coach-card">
-          <img src="https://via.placeholder.com/90" alt="Coach" class="coach-photo">
-          <h3 class="coach-name">Jhon William Dajac</h3>
-          <p class="coach-role">Cardio Training</p>
-          <p class="coach-contact">📞
- 0917 987 6543</p>
-          <button class="view-btn">View Profile</button>
-        </div>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search coaches by name, email, or specialization...">
+        <button class="search-btn" onclick="searchCoaches()">
+          <i class="ph ph-magnifying-glass"></i> Search
+        </button>
+      </div>
 
-        <!-- Coach 4 -->
-        <div class="coach-card">
-          <img src="https://via.placeholder.com/90" alt="Coach" class="coach-photo">
-          <h3 class="coach-name">Mckean Aguilar</h3>
-          <p class="coach-role">Conditioning</p>
-          <p class="coach-contact">📞
- 0912 345 6785</p>
-          <button class="view-btn">View Profile</button>
+      <div class="members-stats">
+        <div class="stat-card">
+          <h3>Total Coaches</h3>
+          <p id="totalCoaches" class="stat-number">0</p>
         </div>
+        <div class="stat-card">
+          <h3>Active Coaches</h3>
+          <p id="activeCoaches" class="stat-number">0</p>
+        </div>
+      </div>
+
+      <div id="coachesGrid" class="coaches-grid">
+        <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+          <i class="ph ph-spinner ph-spin" style="font-size: 32px;"></i>
+          <p>Loading coaches...</p>
+        </div>
+      </div>
 
     </section>
+
+    <!-- Add/Edit Coach Modal -->
+    <div id="coachModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add New Coach</h2>
+          <span class="close">&times;</span>
+        </div>
+        <form id="coachForm">
+          <input type="hidden" id="coachId">
+          
+          <div class="form-group">
+            <label for="coachName">Full Name *</label>
+            <input type="text" id="coachName" required>
+          </div>
+
+          <div class="form-group">
+            <label for="coachEmail">Email *</label>
+            <input type="email" id="coachEmail" required>
+          </div>
+
+          <div class="form-group">
+            <label for="coachPassword">Password (for login account) *</label>
+            <input type="password" id="coachPassword" required minlength="6" placeholder="Minimum 6 characters">
+            <small style="color: #666;">This will create a login account for the coach</small>
+          </div>
+
+          <div class="form-group">
+            <label for="coachPhone">Phone Number *</label>
+            <input type="tel" id="coachPhone" required>
+          </div>
+
+          <div class="form-group">
+            <label for="specialization">Specialization *</label>
+            <input type="text" id="specialization" required placeholder="e.g., Strength Training, Yoga, Cardio">
+          </div>
+
+          <div class="form-group">
+            <label for="experience">Years of Experience (Optional)</label>
+            <input type="number" id="experience" min="0" placeholder="e.g., 5">
+          </div>
+
+          <div class="form-group">
+            <label for="certifications">Certifications (Optional)</label>
+            <textarea id="certifications" rows="2" placeholder="e.g., Certified Personal Trainer, Yoga Instructor"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="bio">Bio (Optional)</label>
+            <textarea id="bio" rows="2" placeholder="Brief description about the coach"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="coachStatus">Status</label>
+            <select id="coachStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeCoachModal()">Cancel</button>
+            <button type="submit" class="btn-primary">
+              <span id="submitBtnText">Add Coach</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
   </div>
 
   <script src="/js/auth-check.js"></script>
   <script src="/js/script.js"></script>
+  <script src="/js/coaches.js"></script>
 </body>
 </html>
 

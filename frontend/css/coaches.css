@@ -1,0 +1,558 @@
+/* Coaches Page Styles */
+
+/* Enhanced coach card styling */
+.coach-card {
+  width: 100%;
+  padding: 24px;
+  background: linear-gradient(135deg, #1d1f30 0%, #252842 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  text-align: center;
+  color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.coach-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f1b306, #f57c00);
+}
+
+.coach-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(241, 179, 6, 0.3);
+}
+
+.coach-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  border: 4px solid #f1b306;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.coach-card:hover .coach-photo {
+  transform: scale(1.1);
+}
+
+.coach-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #f1b306;
+  margin: 10px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.coach-role {
+  font-size: 15px;
+  color: #4CAF50;
+  font-weight: 500;
+  margin: 8px 0;
+  padding: 4px 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.coach-contact, .coach-email {
+  font-size: 13px;
+  margin: 6px 0;
+  opacity: 0.9;
+  color: #b8bcc8;
+}
+
+.coach-email {
+  word-break: break-all;
+}
+
+.coach-experience {
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: inline-block;
+  color: #e0e0e0;
+}
+
+.view-btn {
+  background: transparent;
+  border: 2px solid #f1b306;
+  padding: 10px 20px;
+  color: #f1b306;
+  border-radius: 8px;
+  margin-top: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.view-btn:hover {
+  background: #f1b306;
+  color: #1d1f30;
+  transform: scale(1.05);
+}
+
+/* Coaches grid layout - responsive */
+.coaches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+  padding: 0;
+}
+
+/* Tablet layout */
+@media (max-width: 1024px) {
+  .coaches-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .coach-card {
+    padding: 20px;
+  }
+
+  .coach-name {
+    font-size: 20px;
+  }
+
+  .coach-photo {
+    width: 90px;
+    height: 90px;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  .coaches-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .coach-card {
+    padding: 16px;
+  }
+
+  .coach-name {
+    font-size: 18px;
+  }
+
+  .coach-photo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .coach-role {
+    font-size: 14px;
+  }
+
+  .coach-contact, .coach-email {
+    font-size: 12px;
+  }
+}
+
+/* Small mobile layout */
+@media (max-width: 480px) {
+  .coaches-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .coach-card {
+    padding: 20px;
+    max-width: 100%;
+  }
+}
+
+/* Enhanced action buttons in coach cards */
+.coach-card .btn-icon {
+  padding: 8px 16px;
+  margin: 0 4px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.coach-card .btn-edit {
+  background: rgba(33, 150, 243, 0.1);
+  border: 1px solid #2196F3;
+  color: #2196F3;
+}
+
+.coach-card .btn-edit:hover {
+  background: #2196F3;
+  color: white;
+  transform: scale(1.05);
+}
+
+.coach-card .btn-delete {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid #f44336;
+  color: #f44336;
+}
+
+.coach-card .btn-delete:hover {
+  background: #f44336;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Status badge in coach card */
+.coach-card .status-badge {
+  margin: 12px 0;
+  padding: 6px 16px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Empty state styling */
+.coaches-grid > div[style*="text-align: center"] {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Loading spinner */
+.ph-spin {
+  animation: spin 1s linear infinite;
+  color: #f1b306;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced page header for coaches */
+.content .page-header {
+  background: linear-gradient(135deg, rgba(241, 179, 6, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+/* Enhanced stats cards for coaches page */
+.content .stat-card {
+  background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
+  border-left: 4px solid #f1b306;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.content .stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.content .stat-card h3 {
+  color: #666;
+  font-size: 13px;
+}
+
+.content .stat-card .stat-number {
+  background: linear-gradient(135deg, #f1b306 0%, #f57c00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Enhanced Modal Styling for Coach Form */
+#coachModal .modal-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: none;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+#coachModal .modal-header {
+  background: linear-gradient(135deg, #f1b306 0%, #f57c00 100%);
+  color: white;
+  padding: 24px 30px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+
+#coachModal .modal-header h2 {
+  color: white;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#coachModal .close {
+  color: white;
+  opacity: 0.9;
+  font-size: 36px;
+  transition: all 0.3s ease;
+}
+
+#coachModal .close:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+  color: #fff;
+}
+
+#coachForm {
+  padding: 30px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for form */
+#coachForm::-webkit-scrollbar {
+  width: 8px;
+}
+
+#coachForm::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+#coachForm::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f1b306 0%, #f57c00 100%);
+  border-radius: 10px;
+}
+
+#coachForm::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #f57c00 0%, #f1b306 100%);
+}
+
+#coachForm .form-group {
+  margin-bottom: 24px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#coachForm .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#coachForm .form-group label::after {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 2px;
+  background: #f1b306;
+  transition: width 0.3s ease;
+  margin-left: 4px;
+}
+
+#coachForm .form-group:focus-within label::after {
+  width: 20px;
+}
+
+#coachForm input,
+#coachForm select,
+#coachForm textarea {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background: white;
+}
+
+#coachForm input:focus,
+#coachForm select:focus,
+#coachForm textarea:focus {
+  outline: none;
+  border-color: #f1b306;
+  box-shadow: 0 0 0 4px rgba(241, 179, 6, 0.1);
+  transform: translateY(-2px);
+}
+
+#coachForm input:hover,
+#coachForm select:hover,
+#coachForm textarea:hover {
+  border-color: #f1b306;
+}
+
+#coachForm textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+#coachForm small {
+  color: #7f8c8d;
+  font-size: 12px;
+  display: block;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+#coachForm .modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 2px solid #f0f0f0;
+}
+
+#coachForm .btn-secondary {
+  background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+  color: #333;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#coachForm .btn-secondary:hover {
+  background: linear-gradient(135deg, #d0d0d0 0%, #c0c0c0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+#coachForm .btn-primary {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(76, 175, 80, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+#coachForm .btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+#coachForm .btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+#coachForm .btn-primary:hover {
+  background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+}
+
+#coachForm .btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+/* Form input icons (optional enhancement) */
+#coachForm .form-group {
+  position: relative;
+}
+
+#coachForm input[type="email"]::before,
+#coachForm input[type="tel"]::before {
+  font-family: 'Phosphor';
+}
+
+/* Required field indicator */
+#coachForm label:has(+ input[required])::before,
+#coachForm label:has(+ select[required])::before,
+#coachForm label:has(+ textarea[required])::before {
+  content: '* ';
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Mobile responsiveness for modal */
+@media (max-width: 768px) {
+  #coachModal .modal-content {
+    width: 95%;
+    margin: 20px auto;
+  }
+
+  #coachForm {
+    padding: 20px;
+    max-height: 60vh;
+  }
+
+  #coachModal .modal-header {
+    padding: 20px;
+  }
+
+  #coachModal .modal-header h2 {
+    font-size: 22px;
+  }
+
+  #coachForm .modal-actions {
+    flex-direction: column;
+  }
+
+  #coachForm .btn-secondary,
+  #coachForm .btn-primary {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+/* Success/Error messages styling */
+.alert {
+  animation: slideDown 0.4s ease;
+  border-radius: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

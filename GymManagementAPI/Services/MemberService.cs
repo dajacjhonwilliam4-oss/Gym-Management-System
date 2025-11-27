@@ -30,10 +30,35 @@ public class MemberService : IMemberService
     {
         member.CreatedAt = DateTime.UtcNow;
         member.UpdatedAt = DateTime.UtcNow;
+
+        // Set expiration date and status based on membership type
+        if (member.MembershipType.Equals("Trial", StringComparison.OrdinalIgnoreCase))
+        {
+            member.ExpirationDate = DateTime.UtcNow.AddDays(1);
+            member.IsTrial = true;
+            member.Status = "active";
+        }
+        else if (member.MembershipType.Equals("Monthly", StringComparison.OrdinalIgnoreCase))
+        {
+            member.ExpirationDate = DateTime.UtcNow.AddDays(30);
+            member.Status = "active";
+        }
+        else if (member.MembershipType.Equals("Annual", StringComparison.OrdinalIgnoreCase))
+        {
+            member.ExpirationDate = DateTime.UtcNow.AddDays(365);
+            member.Status = "active";
+        }
+
+        // Check if already expired
+        if (member.ExpirationDate.HasValue && member.ExpirationDate.Value <= DateTime.UtcNow)
+        {
+            member.Status = "expired";
+        }
+
         await _members.InsertOneAsync(member);
 
-        // Create user account for member if password provided
-        if (!string.IsNullOrEmpty(member.Password))
+        // Create user account for member if password provided (not for trial)
+        if (!member.IsTrial && !string.IsNullOrEmpty(member.Password))
         {
             var user = new User
             {

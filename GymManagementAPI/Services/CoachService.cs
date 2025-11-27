@@ -30,16 +30,22 @@ public class CoachService : ICoachService
     {
         coach.CreatedAt = DateTime.UtcNow;
         coach.UpdatedAt = DateTime.UtcNow;
+        
+        // Store the password temporarily before inserting
+        var plainPassword = coach.Password;
+        
+        // Don't store password in coach document
+        coach.Password = null;
         await _coaches.InsertOneAsync(coach);
 
         // Create user account for coach if password provided
-        if (!string.IsNullOrEmpty(coach.Password))
+        if (!string.IsNullOrEmpty(plainPassword))
         {
             var user = new User
             {
                 Name = coach.Name,
                 Email = coach.Email,
-                Password = coach.Password,
+                Password = _authService.HashPassword(plainPassword),
                 Role = "coach",
                 AuthProvider = "local",
                 IsActive = true
@@ -55,7 +61,25 @@ public class CoachService : ICoachService
         coach.UpdatedAt = DateTime.UtcNow;
         coach.Id = id;
         
+        // Store the password temporarily if provided
+        var plainPassword = coach.Password;
+        
+        // Don't store password in coach document
+        coach.Password = null;
+        
         await _coaches.ReplaceOneAsync(c => c.Id == id, coach);
+        
+        // Update user password if provided
+        if (!string.IsNullOrEmpty(plainPassword))
+        {
+            var user = await _users.Find(u => u.Email == coach.Email).FirstOrDefaultAsync();
+            if (user != null)
+            {
+                user.Password = _authService.HashPassword(plainPassword);
+                await _users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            }
+        }
+        
         return coach;
     }
 
@@ -63,5 +87,11 @@ public class CoachService : ICoachService
     {
         var result = await _coaches.DeleteOneAsync(c => c.Id == id);
         return result.DeletedCount > 0;
+    }
+
+    public async Task<long> DeleteAllAsync()
+    {
+        var result = await _coaches.DeleteManyAsync(_ => true);
+        return result.DeletedCount;
     }
 }

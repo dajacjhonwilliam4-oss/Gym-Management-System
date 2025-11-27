@@ -72,9 +72,11 @@ document.addEventListener("DOMContentLoaded", function () {
 const toggleSidebar = document.getElementById("toggleSidebar");
 const sidebar = document.querySelector(".sidebar");
 
-toggleSidebar.addEventListener("click", () => {
-  sidebar.classList.toggle("active");
-});
+if (toggleSidebar && sidebar) {
+  toggleSidebar.addEventListener("click", () => {
+    sidebar.classList.toggle("active");
+  });
+}
 
 const addMemberBtn = document.getElementById('add-member-btn');
 const dialog = document.getElementById('add-member-dialog');
@@ -85,22 +87,29 @@ const membersTableBody = document.querySelector('.members-table tbody');
 const totalMembersEl = document.querySelector('.members-number p');
 
 // Open dialog
-addMemberBtn.addEventListener('click', () => {
-  dialog.showModal();
-});
+if (addMemberBtn && dialog) {
+  addMemberBtn.addEventListener('click', () => {
+    dialog.showModal();
+  });
+}
 
 // Close dialog on cancel
-cancelBtn.addEventListener('click', () => {
-  dialog.close();
-});
+if (cancelBtn && dialog) {
+  cancelBtn.addEventListener('click', () => {
+    dialog.close();
+  });
+}
 
 // Prevent non-numeric input for contact number
-numberInput.addEventListener('input', () => {
-  numberInput.value = numberInput.value.replace(/[^0-9]/g, '');
-});
+if (numberInput) {
+  numberInput.addEventListener('input', () => {
+    numberInput.value = numberInput.value.replace(/[^0-9]/g, '');
+  });
+}
 
 // Handle form submission
-form.addEventListener('submit', (e) => {
+if (form && membersTableBody && totalMembersEl && dialog) {
+  form.addEventListener('submit', (e) => {
   e.preventDefault();
 
   const name = form.name.value;
@@ -130,10 +139,11 @@ form.addEventListener('submit', (e) => {
   // Update total members
   totalMembersEl.textContent = membersTableBody.children.length;
 
-  // Close dialog and reset form
-  dialog.close();
-  form.reset();
-});
+    // Close dialog and reset form
+    dialog.close();
+    form.reset();
+  });
+}
 
 // Helper function to capitalize first letter
 function capitalizeFirstLetter(str) {

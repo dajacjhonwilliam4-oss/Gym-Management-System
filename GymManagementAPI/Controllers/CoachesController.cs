@@ -102,4 +102,19 @@ public class CoachesController : ControllerBase
             return StatusCode(500, new { error = ex.Message });
         }
     }
+
+    [HttpDelete("clear-all")]
+    [Authorize(Roles = "admin")] // Only admin can clear all coaches
+    public async Task<IActionResult> ClearAll()
+    {
+        try
+        {
+            var count = await _coachService.DeleteAllAsync();
+            return Ok(new { message = $"Deleted {count} coaches successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }

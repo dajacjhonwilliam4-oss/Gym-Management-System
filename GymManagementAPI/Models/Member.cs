@@ -36,6 +36,13 @@ public class Member
     [BsonElement("emergencyContact")]
     public string? EmergencyContact { get; set; }
 
+    [BsonElement("expirationDate")]
+    [BsonIgnoreIfNull]
+    public DateTime? ExpirationDate { get; set; }
+
+    [BsonElement("isTrial")]
+    public bool IsTrial { get; set; } = false;
+
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
