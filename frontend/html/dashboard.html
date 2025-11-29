@@ -16,9 +16,9 @@
     <div class="logo">Gym Management System</div>
     <nav>
         <a href="dashboard.html" class="nav-item-admin"><i class="ph ph-house"></i> Dashboard</a>
-        <a href="members.html" class="nav-item-all"><i class="ph ph-users"></i> Members</a>
+        <a href="members.html" class="nav-item-admin"><i class="ph ph-users"></i> Members</a>
         <a href="coaches.html" class="nav-item-all"><i class="ph ph-user"></i> Coaches</a>
-        <a href="payments.html" class="nav-item-admin"><i class="ph ph-currency-dollar"></i> Payments</a>
+        <a href="payments.html" class="nav-item-admin"><i class="ph ph-coins"></i> Payment History</a>
         <a href="schedules.html" class="nav-item-all"><i class="ph ph-calendar"></i> Schedules</a>
     </nav>
   </aside>
@@ -62,14 +62,58 @@
         </div>
 
         <div class="stat-card">
+          <div class="stat-icon" style="background: #e1f5fe;">
+            <i class="ph ph-calendar-check" style="color: #0288d1; font-size: 32px;"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Upcoming Classes</h3>
+            <p id="upcomingClasses" class="stat-number">0</p>
+            <span class="stat-label">Scheduled classes</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
           <div class="stat-icon" style="background: #e8f5e9;">
             <i class="ph ph-currency-dollar" style="color: #4CAF50; font-size: 32px;"></i>
           </div>
           <div class="stat-info">
             <h3>Total Revenue</h3>
-            <p id="totalRevenue" class="stat-number">$0.00</p>
+            <p id="totalRevenue" class="stat-number">₱0.00</p>
             <span class="stat-label">All time earnings</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Revenue Chart Section -->
+      <div class="revenue-chart-section">
+        <div class="chart-header">
+          <h2>Revenue Overview</h2>
+          <div class="chart-date-filter">
+            <div class="filter-item">
+              <label for="chartDateFilter">
+                <i class="ph ph-calendar"></i> Date Range:
+              </label>
+              <select id="chartDateFilter" onchange="changeChartDateFilter()">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month" selected>This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            <div class="filter-item custom-date-range" id="chartCustomDateRange" style="display: none;">
+              <label for="chartStartDate">From:</label>
+              <input type="date" id="chartStartDate">
+              <label for="chartEndDate">To:</label>
+              <input type="date" id="chartEndDate">
+              <button class="btn-apply-filter" onclick="applyChartCustomDateFilter()">Apply</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
         </div>
       </div>
 
@@ -98,6 +142,7 @@
 
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/auth-check.js"></script>
   <script src="/js/script.js"></script>
   <script src="/js/dashboard.js"></script>

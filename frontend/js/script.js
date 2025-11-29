@@ -1,37 +1,38 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const ctx = document.getElementById('revenueChart');
-    if (!ctx) return;
+// Disabled old dummy chart code - now using real data from dashboard.js
+// document.addEventListener("DOMContentLoaded", function () {
+//     const ctx = document.getElementById('revenueChart');
+//     if (!ctx) return;
 
-    new Chart(ctx, {
-        type: 'line', // Change here
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Monthly Revenue',
-                data: [12000, 15000, 18000, 17000, 22000, 25000],
-                borderColor: ' #F1B101', // Line color
-                backgroundColor: '#F1B10133', // Fill under the line
-                borderWidth: 3,
-                fill: true,    // Fill the area under the line
-                tension: 0.3   // Smooth curves
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-    chartAreaBackgroundColor: {
-        backgroundColor: '#ffffff' // <-- Change this to ANY color
-    }
-},
-            scales: {
-                y: {
-                    beginAtZero: false
-                }
-            }
-        }
-    });
-});
+//     new Chart(ctx, {
+//         type: 'line',
+//         data: {
+//             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+//             datasets: [{
+//                 label: 'Monthly Revenue',
+//                 data: [12000, 15000, 18000, 17000, 22000, 25000],
+//                 borderColor: ' #F1B101',
+//                 backgroundColor: '#F1B10133',
+//                 borderWidth: 3,
+//                 fill: true,
+//                 tension: 0.3
+//             }]
+//         },
+//         options: {
+//             responsive: true,
+//             maintainAspectRatio: false,
+//             plugins: {
+//                 chartAreaBackgroundColor: {
+//                     backgroundColor: '#ffffff'
+//                 }
+//             },
+//             scales: {
+//                 y: {
+//                     beginAtZero: false
+//                 }
+//             }
+//         }
+//     });
+// });
 
 /*line graph with that can fetch data from database*/
 /*document.addEventListener("DOMContentLoaded", function () {

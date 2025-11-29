@@ -18,7 +18,7 @@
         <a href="dashboard.html" class="nav-item-admin"><i class="ph ph-house"></i> Dashboard</a>
         <a href="members.html" class="nav-item-all"><i class="ph ph-users"></i> Members</a>
         <a href="coaches.html" class="nav-item-all"><i class="ph ph-user"></i> Coaches</a>
-        <a href="payments.html" class="nav-item-admin"><i class="ph ph-currency-dollar"></i> Payments</a>
+        <a href="payments.html" class="nav-item-admin"><i class="ph ph-coins"></i> Payment History</a>
         <a href="schedules.html" class="nav-item-all"><i class="ph ph-calendar"></i> Schedules</a>
     </nav>
   </aside>
@@ -41,17 +41,16 @@
 
       <div class="page-header">
         <h2>Members Management</h2>
-        <button id="addMemberBtn" class="btn-primary" style="display: none;">
-          <i class="ph ph-plus"></i> Add Member
-        </button>
+        <div class="header-buttons">
+          <button id="addMemberBtn" class="btn-primary" style="display: none;">
+            <i class="ph ph-plus"></i> Add Member
+          </button>
+          <button id="renewMemberBtn" class="btn-renew" style="display: none;">
+            <i class="ph ph-arrows-clockwise"></i> Renew
+          </button>
+        </div>
       </div>
 
-      <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search members by name, email, or phone...">
-        <button class="search-btn" onclick="searchMembers()">
-          <i class="ph ph-magnifying-glass"></i> Search
-        </button>
-      </div>
 
       <div class="members-stats">
         <div class="stat-card">
@@ -61,6 +60,60 @@
         <div class="stat-card">
           <h3>Active Members</h3>
           <p id="activeMembers" class="stat-number">0</p>
+        </div>
+      </div>
+
+      <!-- Filters and Search -->
+      <div class="members-header">
+        <div class="search-filter-container">
+          <div class="search-box">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, email, or phone...">
+          </div>
+          
+          <div class="filter-group">
+            <div class="filter-item">
+              <label for="membershipTypeFilter">
+                <i class="ph ph-tag"></i> Membership:
+              </label>
+              <select id="membershipTypeFilter" onchange="applyFilters()">
+                <option value="">All Memberships</option>
+                <option value="Trial">Trial</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Annual">Annual</option>
+                <option value="Monthly with Coach">Monthly with Coach</option>
+                <option value="Annual with Coach">Annual with Coach</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label for="statusFilter">
+                <i class="ph ph-check-circle"></i> Status:
+              </label>
+              <select id="statusFilter" onchange="applyFilters()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label for="sortSelect">
+                <i class="ph ph-sort-ascending"></i> Sort by:
+              </label>
+              <select id="sortSelect" onchange="applyFilters()">
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="date-newest">Join Date (Newest)</option>
+                <option value="date-oldest">Join Date (Oldest)</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
+            <button class="btn-clear-filters" onclick="clearAllFilters()">
+              <i class="ph ph-x"></i> Clear Filters
+            </button>
+          </div>
         </div>
       </div>
 
@@ -119,13 +172,31 @@
           </div>
 
           <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="isStudent">
+              <span>Student (10% discount)</span>
+            </label>
+          </div>
+
+          <div class="form-group">
             <label for="memberName">Full Name *</label>
             <input type="text" id="memberName" required placeholder="Enter member name">
           </div>
 
-          <div class="form-group">
-            <label for="memberPhone">Phone Number *</label>
-            <input type="tel" id="memberPhone" required placeholder="Enter phone number">
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label for="memberPhone">Phone Number <span id="phoneRequired">*</span></label>
+              <input type="tel" id="memberPhone" required maxlength="11" 
+                     placeholder="e.g., 09123456789" value="09" style="width: 100%;">
+              <small style="color: #666; font-size: 12px;">e.g., 09123456789</small>
+            </div>
+
+            <div class="form-group" style="flex: 1;">
+              <label for="memberAge">Age *</label>
+              <input type="text" id="memberAge" required maxlength="3" 
+                     placeholder="Age" pattern="[0-9]*"
+                     oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="width: 100%;">
+            </div>
           </div>
 
           <div class="form-group dynamic-field" id="emailField">
@@ -140,13 +211,37 @@
           </div>
 
           <div class="form-group dynamic-field" id="addressField">
-            <label for="memberAddress">Address *</label>
+            <label for="memberAddress">
+              Address 
+              <span class="optional-tooltip" title="This field is optional">
+                <i class="ph ph-question"></i>
+              </span>
+            </label>
             <textarea id="memberAddress" rows="3" placeholder="Enter address"></textarea>
           </div>
 
-          <div class="form-group dynamic-field" id="emergencyField">
-            <label for="emergencyContact">Emergency Contact</label>
-            <input type="text" id="emergencyContact" placeholder="Name and Phone">
+          <div class="form-row">
+            <div class="form-group dynamic-field" id="emergencyField">
+              <label for="emergencyContactName">
+                Emergency Contact Name 
+                <span class="optional-tooltip" title="This field is optional">
+                  <i class="ph ph-question"></i>
+                </span>
+              </label>
+              <input type="text" id="emergencyContactName" placeholder="Full name of emergency contact">
+            </div>
+
+            <div class="form-group dynamic-field" id="emergencyPhoneField">
+              <label for="emergencyContactPhone">
+                Phone 
+                <span class="optional-tooltip" title="This field is optional">
+                  <i class="ph ph-question"></i>
+                </span>
+              </label>
+              <input type="tel" id="emergencyContactPhone" maxlength="11" 
+                     placeholder="e.g., 09123456789" value="09">
+              <small style="color: #666; font-size: 12px;">e.g., 09123456789</small>
+            </div>
           </div>
 
           <div class="form-group" id="statusField" style="display: none;">
@@ -189,49 +284,183 @@
 
     <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
-      <div class="modal-content">
+      <div class="modal-content payment-modal-content">
         <div class="modal-header">
-          <h2>Payment Information</h2>
+          <h2><i class="ph ph-currency-dollar"></i> Payment Information</h2>
           <span class="close" onclick="closePaymentModal()">&times;</span>
         </div>
         <form id="paymentForm">
           <input type="hidden" id="paymentMemberId">
           <input type="hidden" id="paymentMemberName">
           <input type="hidden" id="paymentMembershipType">
+          <input type="hidden" id="paymentIsStudent">
           
-          <div class="payment-summary">
-            <h3>Membership Summary</h3>
-            <p><strong>Member:</strong> <span id="paymentSummaryName"></span></p>
-            <p><strong>Membership Type:</strong> <span id="paymentSummaryType"></span></p>
-            <p><strong>Coach:</strong> <span id="paymentSummaryCoach">N/A</span></p>
-            <p><strong>Amount:</strong> <span id="paymentSummaryAmount"></span></p>
+          <div class="payment-summary-card">
+            <h3><i class="ph ph-receipt"></i> Membership Summary</h3>
+            <div class="summary-row">
+              <span class="summary-label">Member:</span>
+              <span class="summary-value" id="paymentSummaryName"></span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Membership Type:</span>
+              <span class="summary-value" id="paymentSummaryType"></span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Coach:</span>
+              <span class="summary-value" id="paymentSummaryCoach">N/A</span>
+            </div>
+            <div class="summary-row" id="studentDiscountRow" style="display: none;">
+              <span class="summary-label"><i class="ph ph-student"></i> Student Discount (10%):</span>
+              <span class="summary-value discount-text" id="studentDiscountAmount">-₱0.00</span>
+            </div>
+            <div class="summary-row total-row">
+              <span class="summary-label">Total Amount:</span>
+              <span class="summary-value amount-highlight" id="paymentSummaryAmount"></span>
+            </div>
           </div>
 
           <div class="form-group">
-            <label for="paymentAmount">Amount *</label>
-            <input type="number" id="paymentAmount" required min="0" step="0.01">
+            <label for="paymentAmount">Amount (Read-only) *</label>
+            <input type="text" id="paymentAmount" readonly class="readonly-input">
           </div>
 
           <div class="form-group">
-            <label for="paymentMethod">Payment Method *</label>
+            <label for="paymentMethod"><i class="ph ph-credit-card"></i> Payment Method *</label>
             <select id="paymentMethod" required>
               <option value="">Select Payment Method</option>
-              <option value="Cash">Cash</option>
-              <option value="Credit Card">Credit Card</option>
-              <option value="Debit Card">Debit Card</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Online Payment">Online Payment</option>
+              <option value="Cash">💵 Cash</option>
+              <option value="Credit Card">💳 Credit Card</option>
+              <option value="Debit Card">💳 Debit Card</option>
+              <option value="Bank Transfer">🏦 Bank Transfer</option>
+              <option value="Online Payment">📱 Online Payment</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label for="paymentNotes">Notes</label>
+            <label for="paymentNotes">
+              <i class="ph ph-note"></i> Notes 
+              <span class="optional-tooltip" title="This field is optional">
+                <i class="ph ph-question"></i>
+              </span>
+            </label>
             <textarea id="paymentNotes" rows="3" placeholder="Additional payment notes..."></textarea>
           </div>
 
+          <div class="modal-actions" style="justify-content: center; padding: 0 20px;">
+            <button type="button" class="btn-secondary" onclick="closePaymentModal()">
+              <i class="ph ph-arrow-left"></i> Back
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="ph ph-check-circle"></i> Process Payment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Toast Notification -->
+    <div id="successToast" class="success-toast">
+      <div class="toast-content">
+        <i class="ph ph-check-circle toast-icon"></i>
+        <div class="toast-message">
+          <strong>Payment Successful!</strong>
+          <p>Payment has been processed successfully.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Renew Membership Modal -->
+    <div id="renewModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Renew Membership</h2>
+          <span class="close" onclick="closeRenewModal()">&times;</span>
+        </div>
+        <form id="renewForm">
+          <div class="form-group">
+            <label for="renewMemberSelect">Select Member to Renew *</label>
+            <select id="renewMemberSelect" required>
+              <option value="">Select Member</option>
+            </select>
+            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+              Choose a member to renew or extend their membership
+            </small>
+          </div>
+
+          <div id="renewMemberInfo" style="display: none; background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; color: #667eea; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Current Member Information</h4>
+            <p style="margin: 8px 0; font-size: 14px; line-height: 1.6;"><strong>Name:</strong> <span id="renewInfoName"></span></p>
+            <p style="margin: 8px 0; font-size: 14px; line-height: 1.6;"><strong>Current Membership:</strong> <span id="renewInfoType"></span></p>
+            <p style="margin: 8px 0; font-size: 14px; line-height: 1.6;"><strong>Status:</strong> <span id="renewInfoStatus"></span></p>
+            <p style="margin: 8px 0; font-size: 14px; line-height: 1.6;"><strong>Expiration Date:</strong> <span id="renewInfoExpiration"></span></p>
+          </div>
+
+          <div class="form-group">
+            <label for="renewMembershipType">New Membership Type *</label>
+            <select id="renewMembershipType" required>
+              <option value="">Select Membership Type</option>
+              <option value="Monthly">Monthly (30 days)</option>
+              <option value="Annual">Annual (365 days)</option>
+              <option value="Monthly with Coach">Monthly with Coach (30 days)</option>
+              <option value="Annual with Coach">Annual with Coach (365 days)</option>
+            </select>
+            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+              <span id="renewMembershipTypeHint">Select the membership type to add/extend</span>
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="renewIsStudent">
+              <span style="font-weight: 600;">Student (10% discount)</span>
+            </label>
+          </div>
+
+          <div id="renewPaymentInfo" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">Payment Summary</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 15px; line-height: 1.5;">
+              <span>Base Amount:</span>
+              <strong id="renewBaseAmount" style="font-size: 16px;">₱0.00</strong>
+            </div>
+            <div id="renewDiscountRow" style="display: none; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 15px; line-height: 1.5;">
+              <span>Student Discount (10%):</span>
+              <strong id="renewDiscountAmount" style="font-size: 16px;">-₱0.00</strong>
+            </div>
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.3); margin: 18px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 17px; line-height: 1.5;">
+              <span style="font-weight: 500;">Total Amount:</span>
+              <strong id="renewTotalAmount" style="font-size: 20px;">₱0.00</strong>
+            </div>
+          </div>
+
+          <div id="renewPaymentFields" style="display: none;">
+            <div class="form-group">
+              <label for="renewPaymentMethod">Payment Method *</label>
+              <select id="renewPaymentMethod" required>
+                <option value="">Select Payment Method</option>
+                <option value="cash">Cash</option>
+                <option value="gcash">GCash</option>
+                <option value="bank-transfer">Bank Transfer</option>
+                <option value="credit-card">Credit Card</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="renewPaymentNotes">
+                Notes 
+                <span class="optional-tooltip" title="This field is optional">
+                  <i class="ph ph-question"></i>
+                </span>
+              </label>
+              <textarea id="renewPaymentNotes" rows="3" placeholder="Additional notes for renewal..."></textarea>
+            </div>
+          </div>
+
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" onclick="closePaymentModal()">Skip</button>
-            <button type="submit" class="btn-primary">Process Payment</button>
+            <button type="button" class="btn-secondary" onclick="closeRenewModal()">Cancel</button>
+            <button type="submit" class="btn-primary">
+              <span id="renewSubmitBtnText">Process Renewal</span>
+            </button>
           </div>
         </form>
       </div>

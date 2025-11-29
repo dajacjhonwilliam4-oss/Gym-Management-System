@@ -140,6 +140,115 @@
     border-left: 4px solid #f44336;
 }
 
+/* Revenue Chart Section */
+.revenue-chart-section {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.chart-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.chart-date-filter {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.chart-date-filter .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-date-filter .filter-item label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-date-filter .filter-item label i {
+    font-size: 18px;
+}
+
+.chart-date-filter select,
+.chart-date-filter input[type="date"] {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.chart-date-filter select {
+    min-width: 150px;
+}
+
+.chart-date-filter select:hover,
+.chart-date-filter input[type="date"]:hover {
+    border-color: #4CAF50;
+}
+
+.chart-date-filter select:focus,
+.chart-date-filter input[type="date"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.chart-date-filter .custom-date-range {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.chart-date-filter .btn-apply-filter {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.chart-date-filter .btn-apply-filter:hover {
+    background: #45a049;
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+}
+
+.chart-container canvas {
+    max-height: 350px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-stats {
@@ -153,5 +262,36 @@
 
     .action-buttons {
         grid-template-columns: 1fr;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .chart-date-filter {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .chart-date-filter .filter-item {
+        width: 100%;
+    }
+
+    .chart-date-filter select {
+        width: 100%;
+    }
+
+    .chart-date-filter .custom-date-range {
+        flex-direction: column;
+    }
+
+    .chart-date-filter input[type="date"] {
+        width: 100%;
+    }
+
+    .chart-container {
+        height: 280px;
     }
 }

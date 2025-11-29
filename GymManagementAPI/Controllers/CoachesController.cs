@@ -11,10 +11,12 @@ namespace GymManagementAPI.Controllers;
 public class CoachesController : ControllerBase
 {
     private readonly ICoachService _coachService;
+    private readonly IUserService _userService;
 
-    public CoachesController(ICoachService coachService)
+    public CoachesController(ICoachService coachService, IUserService userService)
     {
         _coachService = coachService;
+        _userService = userService;
     }
 
     [HttpGet]
@@ -56,6 +58,39 @@ public class CoachesController : ControllerBase
         try
         {
             var createdCoach = await _coachService.CreateAsync(coach);
+            
+            // Auto-create user account for coach
+            if (!string.IsNullOrEmpty(coach.Email))
+            {
+                try
+                {
+                    // Check if user already exists
+                    var existingUsers = await _userService.GetAllAsync();
+                    var userExists = existingUsers.Any(u => u.Email == coach.Email);
+                    
+                    if (!userExists)
+                    {
+                        // Create user account with default password
+                        var user = new User
+                        {
+                            Name = coach.Name,
+                            Email = coach.Email,
+                            Password = "coach123", // Default password (will be hashed)
+                            Role = "coach",
+                            AuthProvider = "local",
+                            IsActive = true
+                        };
+                        
+                        await _userService.CreateAsync(user);
+                    }
+                }
+                catch (Exception userEx)
+                {
+                    // Log but don't fail coach creation if user creation fails
+                    Console.WriteLine($"Failed to create user account: {userEx.Message}");
+                }
+            }
+            
             return StatusCode(201, createdCoach);
         }
         catch (Exception ex)
