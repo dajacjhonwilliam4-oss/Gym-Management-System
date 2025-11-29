@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payments</title>
+  <title>Payment History - Gym Management</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/members.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
 </head>
 <body>
 
@@ -15,9 +15,9 @@
     <div class="logo">Gym Management System</div>
     <nav>
         <a href="dashboard.html" class="nav-item-admin"><i class="ph ph-house"></i> Dashboard</a>
-        <a href="members.html" class="nav-item-all"><i class="ph ph-users"></i> Members</a>
+        <a href="members.html" class="nav-item-admin"><i class="ph ph-users"></i> Members</a>
         <a href="coaches.html" class="nav-item-all"><i class="ph ph-user"></i> Coaches</a>
-        <a href="payments.html" class="nav-item-admin"><i class="ph ph-currency-dollar"></i> Payments</a>
+        <a href="payments.html" class="nav-item-admin"><i class="ph ph-coins"></i> Payment History</a>
         <a href="schedules.html" class="nav-item-all"><i class="ph ph-calendar"></i> Schedules</a>
     </nav>
   </aside>
@@ -28,35 +28,160 @@
     <!-- Header -->
     <header class="topbar">
       <button id="toggleSidebar" class="menu-btn">☰</button>
-      <h1>Payments</h1>
+      <h1>Payment History</h1>
       <div class="user-menu">
         <span id="userName">User</span>
         <button onclick="logout()" class="btn-logout">Logout</button>
       </div>
     </header>
 
-    <!-- Dashboard Content -->
+    <!-- Payment History Content -->
     <section class="content">
-      <div class="card">
-        <h2>Card 1</h2>
-        <p>This is some information.</p>
+      
+      <!-- Statistics Cards -->
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <i class="ph ph-currency-dollar"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="totalRevenue">₱0.00</h3>
+            <p>Total Revenue</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <i class="ph ph-receipt"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="totalPayments">0</h3>
+            <p>Total Payments</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <i class="ph ph-trend-up"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="thisMonthRevenue">₱0.00</h3>
+            <p>This Month</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <i class="ph ph-calendar"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="todayRevenue">₱0.00</h3>
+            <p>Today</p>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <h2>Card 2</h2>
-        <p>More information here.</p>
+      <!-- Filters and Search -->
+      <div class="members-header">
+        <div class="search-filter-container">
+          <div class="search-box">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search by member name...">
+          </div>
+          
+          <div class="filter-group">
+            <div class="filter-item">
+              <label for="memberFilter">
+                <i class="ph ph-user"></i> Member:
+              </label>
+              <select id="memberFilter">
+                <option value="">All Members</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label for="membershipTypeFilter">
+                <i class="ph ph-tag"></i> Membership:
+              </label>
+              <select id="membershipTypeFilter">
+                <option value="">All Memberships</option>
+                <option value="Trial">Trial</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Annual">Annual</option>
+                <option value="Monthly with Coach">Monthly with Coach</option>
+                <option value="Annual with Coach">Annual with Coach</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label for="dateFilter">
+                <i class="ph ph-calendar"></i> Date Range:
+              </label>
+              <select id="dateFilter">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            <div class="filter-item custom-date-range" id="customDateRange" style="display: none;">
+              <label for="startDate">From:</label>
+              <input type="date" id="startDate">
+              <label for="endDate">To:</label>
+              <input type="date" id="endDate">
+              <button class="btn-apply-filter" onclick="applyCustomDateFilter()">Apply</button>
+            </div>
+
+            <button class="btn-clear-filters" onclick="clearFilters()">
+              <i class="ph ph-x"></i> Clear Filters
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <h2>Card 3</h2>
-        <p>Even more information.</p>
+      <!-- Payment History Table -->
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Member Name</th>
+              <th>Membership Type</th>
+              <th>Student</th>
+              <th>Amount</th>
+              <th>Payment Method</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 40px;">
+                <i class="ph ph-spinner ph-spin" style="font-size: 32px;"></i>
+                <p>Loading payment history...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <i class="ph ph-receipt" style="font-size: 64px; color: #ccc;"></i>
+        <h3>No Payments Found</h3>
+        <p>No payment records match your search criteria.</p>
+      </div>
+
     </section>
 
   </div>
 
   <script src="/js/auth-check.js"></script>
   <script src="/js/script.js"></script>
+  <script src="/js/payments.js"></script>
 </body>
 </html>
 

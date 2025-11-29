@@ -46,4 +46,10 @@ public class PaymentService : IPaymentService
         var payments = await _payments.Find(_ => true).ToListAsync();
         return payments.Sum(p => p.Amount);
     }
+
+    public async Task<bool> DeleteAsync(string id)
+    {
+        var result = await _payments.DeleteOneAsync(p => p.Id == id);
+        return result.DeletedCount > 0;
+    }
 }

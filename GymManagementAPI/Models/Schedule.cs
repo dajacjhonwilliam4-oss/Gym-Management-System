@@ -17,7 +17,11 @@ public class Schedule
     public string CoachId { get; set; } = string.Empty;
 
     [BsonElement("day")]
-    public string Day { get; set; } = string.Empty;
+    [BsonIgnoreIfNull]
+    public string? Day { get; set; }
+
+    [BsonElement("date")]
+    public string Date { get; set; } = string.Empty;
 
     [BsonElement("startTime")]
     public string StartTime { get; set; } = string.Empty;
@@ -26,7 +30,11 @@ public class Schedule
     public string EndTime { get; set; } = string.Empty;
 
     [BsonElement("capacity")]
-    public int Capacity { get; set; } = 20;
+    public int? Capacity { get; set; }
+
+    [BsonElement("description")]
+    [BsonIgnoreIfNull]
+    public string? Description { get; set; }
 
     [BsonElement("enrolledMembers")]
     [BsonRepresentation(BsonType.ObjectId)]

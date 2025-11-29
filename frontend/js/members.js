@@ -3,7 +3,9 @@
 // Track if we need to show payment modal after member creation
 let showPaymentAfterCreate = false;
 let createdMemberData = null;
+let pendingMemberData = null; // Store member data before payment
 let allMembers = [];
+let filteredMembers = []; // Store filtered/sorted members
 let currentUser = null;
 let allCoaches = [];
 let selectedCoachId = null;
@@ -22,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 el.style.display = '';
             });
             document.getElementById('addMemberBtn').style.display = 'inline-flex';
+            document.getElementById('renewMemberBtn').style.display = 'inline-flex';
             document.querySelectorAll('.nav-item-admin').forEach(el => {
                 el.style.display = '';
             });
@@ -41,6 +44,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Setup search
     setupSearch();
+    
+    // Setup phone number inputs with "09" prefix protection
+    setupPhoneInputs();
 });
 
 // Load all members from API
@@ -96,11 +102,14 @@ function displayMembers(members) {
             }
         }
         
+        // Display email as N/A for Trial members with placeholder emails
+        const displayEmail = member.email && !member.email.includes('@trial.local') ? member.email : 'N/A';
+        
         return `
         <tr>
             <td>${index + 1}</td>
             <td>${escapeHtml(member.name)}</td>
-            <td>${escapeHtml(member.email || 'N/A')}</td>
+            <td>${escapeHtml(displayEmail)}</td>
             <td>${escapeHtml(member.phone)}</td>
             <td><span class="badge badge-${member.membershipType?.toLowerCase().replace(/ /g, '-')}">${escapeHtml(member.membershipType || 'N/A')}</span></td>
             <td>${escapeHtml(member.coachName || 'N/A')}</td>
@@ -134,39 +143,190 @@ function setupSearch() {
     const searchInput = document.getElementById('searchInput');
     
     searchInput.addEventListener('input', function() {
-        searchMembers();
+        applyFilters();
     });
 
     searchInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            searchMembers();
+            applyFilters();
         }
     });
 }
 
-function searchMembers() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+// Setup phone inputs with "09" prefix protection
+function setupPhoneInputs() {
+    const phoneInputs = [
+        document.getElementById('memberPhone'),
+        document.getElementById('emergencyContactPhone')
+    ];
     
-    if (!searchTerm) {
-        displayMembers(allMembers);
-        return;
-    }
-
-    const filtered = allMembers.filter(member => {
-        return member.name.toLowerCase().includes(searchTerm) ||
-               member.email.toLowerCase().includes(searchTerm) ||
-               member.phone.toLowerCase().includes(searchTerm) ||
-               (member.membershipType && member.membershipType.toLowerCase().includes(searchTerm)) ||
-               (member.coachName && member.coachName.toLowerCase().includes(searchTerm));
+    phoneInputs.forEach(input => {
+        if (!input) return;
+        
+        // Ensure "09" prefix on input
+        input.addEventListener('input', function(e) {
+            let value = this.value.replace(/[^0-9]/g, ''); // Remove non-digits
+            
+            // Always ensure starts with "09"
+            if (!value.startsWith('09')) {
+                value = '09' + value.replace(/^0+/, ''); // Remove leading zeros and prepend 09
+            }
+            
+            // Limit to 11 digits
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            
+            this.value = value;
+        });
+        
+        // Prevent deleting "09" prefix
+        input.addEventListener('keydown', function(e) {
+            const cursorPosition = this.selectionStart;
+            const value = this.value;
+            
+            // Prevent deletion if it would remove "09" prefix
+            if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 2) {
+                e.preventDefault();
+            }
+            
+            // Prevent selection that includes "09" prefix
+            if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                this.setSelectionRange(2, value.length);
+            }
+        });
+        
+        // Prevent pasting over "09" prefix
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const digitsOnly = pastedText.replace(/[^0-9]/g, '');
+            
+            let newValue = '09' + digitsOnly.replace(/^0+/, '');
+            if (newValue.length > 11) {
+                newValue = newValue.substring(0, 11);
+            }
+            
+            this.value = newValue;
+        });
+        
+        // Prevent cutting "09" prefix
+        input.addEventListener('cut', function(e) {
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            
+            if (start < 2) {
+                e.preventDefault();
+            }
+        });
+        
+        // Focus handler - move cursor after "09" if at beginning
+        input.addEventListener('focus', function() {
+            if (this.value === '09') {
+                setTimeout(() => {
+                    this.setSelectionRange(2, 2);
+                }, 0);
+            }
+        });
+        
+        // Click handler - prevent cursor before "09"
+        input.addEventListener('click', function() {
+            if (this.selectionStart < 2) {
+                this.setSelectionRange(2, 2);
+            }
+        });
     });
+}
 
+// Apply all filters and sorting
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const membershipTypeFilter = document.getElementById('membershipTypeFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const sortValue = document.getElementById('sortSelect').value;
+    
+    // Start with all members
+    let filtered = [...allMembers];
+    
+    // Apply search filter
+    if (searchTerm) {
+        filtered = filtered.filter(member => {
+            return member.name.toLowerCase().includes(searchTerm) ||
+                   member.email.toLowerCase().includes(searchTerm) ||
+                   member.phone.toLowerCase().includes(searchTerm) ||
+                   (member.membershipType && member.membershipType.toLowerCase().includes(searchTerm)) ||
+                   (member.coachName && member.coachName.toLowerCase().includes(searchTerm));
+        });
+    }
+    
+    // Apply membership type filter
+    if (membershipTypeFilter) {
+        filtered = filtered.filter(member => member.membershipType === membershipTypeFilter);
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+        filtered = filtered.filter(member => {
+            // Auto-detect expired status
+            let memberStatus = member.status;
+            if (member.expirationDate) {
+                const expDate = new Date(member.expirationDate);
+                const now = new Date();
+                if (expDate <= now) {
+                    memberStatus = 'expired';
+                }
+            }
+            return memberStatus === statusFilter;
+        });
+    }
+    
+    // Apply sorting
+    switch(sortValue) {
+        case 'name-asc':
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'name-desc':
+            filtered.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+        case 'date-newest':
+            filtered.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
+            break;
+        case 'date-oldest':
+            filtered.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+            break;
+        case 'status':
+            filtered.sort((a, b) => {
+                const statusA = a.status || '';
+                const statusB = b.status || '';
+                return statusA.localeCompare(statusB);
+            });
+            break;
+    }
+    
+    filteredMembers = filtered;
     displayMembers(filtered);
+}
+
+// Clear all filters
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('membershipTypeFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('sortSelect').value = 'name-asc';
+    applyFilters();
+}
+
+// Search members - trigger filter on input
+function searchMembers() {
+    applyFilters();
 }
 
 // Modal functions
 function setupModal() {
     const modal = document.getElementById('memberModal');
     const addBtn = document.getElementById('addMemberBtn');
+    const renewBtn = document.getElementById('renewMemberBtn');
     const closeBtn = document.querySelector('.close');
     const form = document.getElementById('memberForm');
 
@@ -174,6 +334,13 @@ function setupModal() {
     if (addBtn) {
         addBtn.onclick = function() {
             openMemberModal();
+        };
+    }
+
+    // Open renew modal
+    if (renewBtn) {
+        renewBtn.onclick = function() {
+            openRenewModal();
         };
     }
 
@@ -224,7 +391,9 @@ function handleMembershipTypeChange() {
     const emailField = document.getElementById('emailField');
     const passwordField = document.getElementById('passwordField');
     const addressField = document.getElementById('addressField');
+    const studentField = document.getElementById('studentField');
     const emergencyField = document.getElementById('emergencyField');
+    const emergencyPhoneField = document.getElementById('emergencyPhoneField');
     const statusField = document.getElementById('statusField');
     
     // Get input elements for validation
@@ -234,24 +403,38 @@ function handleMembershipTypeChange() {
     
     if (membershipType === 'Trial') {
         // Update hint
-        membershipTypeHint.textContent = '✓ Trial membership - Only name and phone required';
+        membershipTypeHint.textContent = '✓ Trial membership - Only name and age required';
         membershipTypeHint.style.color = '#4CAF50';
         
         // Hide fields with animation
         hideFieldWithAnimation(emailField);
         hideFieldWithAnimation(passwordField);
         hideFieldWithAnimation(addressField);
+        hideFieldWithAnimation(studentField);
         hideFieldWithAnimation(emergencyField);
+        hideFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
+        // Uncheck student checkbox for trial (no discount on trial)
+        document.getElementById('isStudent').checked = false;
+        
         // Make fields not required
+        document.getElementById('memberPhone').required = false;
         emailInput.required = false;
         passwordInput.required = false;
         addressInput.required = false;
         
-        // Clear values
+        // Update phone label to show it's optional
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'none';
+        }
+        
+        // Clear values including emergency contact fields
         emailInput.value = '';
         passwordInput.value = '';
+        document.getElementById('emergencyContactName').value = '';
+        document.getElementById('emergencyContactPhone').value = '09';
         
     } else if (membershipType === 'Monthly') {
         // Update hint
@@ -262,13 +445,22 @@ function handleMembershipTypeChange() {
         showFieldWithAnimation(emailField);
         showFieldWithAnimation(passwordField);
         showFieldWithAnimation(addressField);
+        showFieldWithAnimation(studentField);
         showFieldWithAnimation(emergencyField);
+        showFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
-        // Make fields required
+        // Make fields required (except address which is optional)
+        document.getElementById('memberPhone').required = true;
         emailInput.required = true;
         passwordInput.required = true;
-        addressInput.required = true;
+        addressInput.required = false;
+        
+        // Show phone as required
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'inline';
+        }
         
     } else if (membershipType === 'Annual') {
         // Update hint
@@ -279,13 +471,22 @@ function handleMembershipTypeChange() {
         showFieldWithAnimation(emailField);
         showFieldWithAnimation(passwordField);
         showFieldWithAnimation(addressField);
+        showFieldWithAnimation(studentField);
         showFieldWithAnimation(emergencyField);
+        showFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
-        // Make fields required
+        // Make fields required (except address which is optional)
+        document.getElementById('memberPhone').required = true;
         emailInput.required = true;
         passwordInput.required = true;
-        addressInput.required = true;
+        addressInput.required = false;
+        
+        // Show phone as required
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'inline';
+        }
         
     } else if (membershipType === 'Monthly with Coach') {
         // Update hint
@@ -296,13 +497,22 @@ function handleMembershipTypeChange() {
         showFieldWithAnimation(emailField);
         showFieldWithAnimation(passwordField);
         showFieldWithAnimation(addressField);
+        showFieldWithAnimation(studentField);
         showFieldWithAnimation(emergencyField);
+        showFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
-        // Make fields required
+        // Make fields required (except address which is optional)
+        document.getElementById('memberPhone').required = true;
         emailInput.required = true;
         passwordInput.required = true;
-        addressInput.required = true;
+        addressInput.required = false;
+        
+        // Show phone as required
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'inline';
+        }
         
     } else if (membershipType === 'Annual with Coach') {
         // Update hint
@@ -313,13 +523,22 @@ function handleMembershipTypeChange() {
         showFieldWithAnimation(emailField);
         showFieldWithAnimation(passwordField);
         showFieldWithAnimation(addressField);
+        showFieldWithAnimation(studentField);
         showFieldWithAnimation(emergencyField);
+        showFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
-        // Make fields required
+        // Make fields required (except address which is optional)
+        document.getElementById('memberPhone').required = true;
         emailInput.required = true;
         passwordInput.required = true;
-        addressInput.required = true;
+        addressInput.required = false;
+        
+        // Show phone as required
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'inline';
+        }
         
     } else {
         // Default: waiting for selection
@@ -330,12 +549,21 @@ function handleMembershipTypeChange() {
         showFieldWithAnimation(emailField);
         showFieldWithAnimation(passwordField);
         showFieldWithAnimation(addressField);
+        showFieldWithAnimation(studentField);
         showFieldWithAnimation(emergencyField);
+        showFieldWithAnimation(emergencyPhoneField);
         hideFieldWithAnimation(statusField);
         
+        document.getElementById('memberPhone').required = true;
         emailInput.required = true;
         passwordInput.required = true;
         addressInput.required = false;
+        
+        // Show phone as required
+        const phoneRequired = document.getElementById('phoneRequired');
+        if (phoneRequired) {
+            phoneRequired.style.display = 'inline';
+        }
     }
 }
 
@@ -397,7 +625,17 @@ function openMemberModal(memberId = null) {
             document.getElementById('memberPhone').value = member.phone;
             document.getElementById('membershipType').value = member.membershipType;
             document.getElementById('memberAddress').value = member.address || '';
-            document.getElementById('emergencyContact').value = member.emergencyContact || '';
+            
+            // Parse emergency contact if exists (format: "Name - Phone")
+            if (member.emergencyContact) {
+                const parts = member.emergencyContact.split(' - ');
+                document.getElementById('emergencyContactName').value = parts[0] !== 'N/A' ? parts[0] : '';
+                document.getElementById('emergencyContactPhone').value = parts[1] !== 'N/A' ? parts[1] : '';
+            } else {
+                document.getElementById('emergencyContactName').value = '';
+                document.getElementById('emergencyContactPhone').value = '';
+            }
+            
             document.getElementById('memberStatus').value = member.status || 'active';
         }
     } else {
@@ -419,46 +657,83 @@ function closeMemberModal() {
 // Save member (Add or Update)
 async function saveMember() {
     const memberId = document.getElementById('memberId').value;
-    const password = document.getElementById('memberPassword').value;
+    const memberName = document.getElementById('memberName').value.trim();
+    const memberPhone = document.getElementById('memberPhone').value.trim();
+    const memberAge = document.getElementById('memberAge').value.trim();
+    const password = document.getElementById('memberPassword').value.trim();
     const membershipType = document.getElementById('membershipType').value;
+    const emergencyContactName = document.getElementById('emergencyContactName').value.trim();
+    const emergencyContactPhone = document.getElementById('emergencyContactPhone').value.trim();
+    const isStudent = document.getElementById('isStudent').checked;
+    
+    // Validation
+    if (!memberName) {
+        showMessage('Please enter member name', 'error');
+        return;
+    }
+
+    // Phone validation (optional for Trial, required for others)
+    if (membershipType !== 'Trial') {
+        if (!memberPhone || memberPhone === '09') {
+            showMessage('Please enter phone number', 'error');
+            return;
+        }
+
+        // Validate phone number format (11 digits)
+        if (!/^\d{11}$/.test(memberPhone)) {
+            showMessage('Phone number must be exactly 11 digits', 'error');
+            return;
+        }
+    } else {
+        // For Trial, if phone is provided, validate it
+        if (memberPhone && memberPhone !== '09' && !/^\d{11}$/.test(memberPhone)) {
+            showMessage('Phone number must be exactly 11 digits if provided', 'error');
+            return;
+        }
+    }
+
+    // Validate age
+    if (!memberAge || memberAge < 1 || memberAge > 150) {
+        showMessage('Please enter a valid age (1-150)', 'error');
+        return;
+    }
+
+    // Validate emergency contact phone if provided (skip for Trial membership)
+    if (membershipType !== 'Trial' && emergencyContactPhone && emergencyContactPhone !== '09' && !/^\d{11}$/.test(emergencyContactPhone)) {
+        showMessage('Emergency contact phone must be exactly 11 digits or leave it empty', 'error');
+        return;
+    }
+
+    if (!membershipType) {
+        showMessage('Please select membership type', 'error');
+        return;
+    }
+    
+    // Build emergency contact string only if name or phone is provided
+    let emergencyContact = null;
+    if (emergencyContactName || emergencyContactPhone) {
+        emergencyContact = `${emergencyContactName || 'N/A'} - ${emergencyContactPhone || 'N/A'}`;
+    }
     
     const memberData = {
-        name: document.getElementById('memberName').value.trim(),
-        phone: document.getElementById('memberPhone').value.trim(),
+        name: memberName,
+        phone: memberPhone && memberPhone !== '09' ? memberPhone : '', // Empty if just '09'
+        age: parseInt(memberAge),
         membershipType: membershipType,
+        isStudent: isStudent
     };
 
     // For Trial members, email is optional
     if (membershipType === 'Trial') {
         memberData.email = `trial_${Date.now()}@trial.local`; // Placeholder email for trial
         memberData.address = '';
-        memberData.emergencyContact = '';
+        memberData.emergencyContact = emergencyContact || '';
     } else {
         memberData.email = document.getElementById('memberEmail').value.trim();
-        memberData.address = document.getElementById('memberAddress').value.trim();
-        memberData.emergencyContact = document.getElementById('emergencyContact').value.trim();
+        memberData.address = document.getElementById('memberAddress').value.trim() || ''; // Address is optional
+        memberData.emergencyContact = emergencyContact || '';
         
-        // Add password only if provided (required for new, optional for edit)
-        if (password) {
-            memberData.password = password;
-        }
-    }
-
-    // Set status
-    if (document.getElementById('memberStatus').style.display !== 'none') {
-        memberData.status = document.getElementById('memberStatus').value;
-    } else {
-        memberData.status = 'active';
-    }
-
-    // Validation
-    if (!memberData.name || !memberData.phone || !memberData.membershipType) {
-        showMessage('Please fill in all required fields', 'error');
-        return;
-    }
-
-    // Validation for non-trial members
-    if (membershipType !== 'Trial') {
+        // Validation for non-trial members
         if (!memberData.email || memberData.email === '') {
             showMessage('Email is required for Monthly and Annual memberships', 'error');
             return;
@@ -474,43 +749,62 @@ async function saveMember() {
             showMessage('Password must be at least 6 characters', 'error');
             return;
         }
+        
+        // Add password only if provided (required for new, optional for edit)
+        if (password) {
+            memberData.password = password;
+        }
+    }
+
+    // Set status
+    if (document.getElementById('memberStatus').style.display !== 'none') {
+        memberData.status = document.getElementById('memberStatus').value;
+    } else {
+        memberData.status = 'active';
     }
 
     try {
-        const url = memberId ? `/api/members/${memberId}` : '/api/members';
-        const method = memberId ? 'PUT' : 'POST';
+        // If editing existing member, save directly
+        if (memberId) {
+            const response = await authenticatedFetch(`/api/members/${memberId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(memberData)
+            });
 
-        const response = await authenticatedFetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(memberData)
-        });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update member');
+            }
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to save member');
-        }
-
-        const savedMember = await response.json();
-        const message = memberId ? 'Member updated successfully!' : 'Member added successfully!';
-        showMessage(message, 'success');
-        
-        closeMemberModal();
-        await loadMembers(); // Reload the list
-
-        // Handle post-creation workflow for new members only
-        if (!memberId) {
-            createdMemberData = savedMember;
+            showMessage('Member updated successfully!', 'success');
+            closeMemberModal();
+            await loadMembers();
+        } else {
+            // For new members, DON'T save yet - go to payment first
+            closeMemberModal();
+            
+            // Store member data temporarily
+            pendingMemberData = memberData;
+            
+            // Create a temporary member object for display in payment modal
+            const tempMember = {
+                ...memberData,
+                id: 'pending', // Temporary ID
+                name: memberData.name,
+                membershipType: memberData.membershipType,
+                isStudent: memberData.isStudent
+            };
             
             // Check if membership requires coach selection
             if (membershipType === 'Monthly with Coach' || membershipType === 'Annual with Coach') {
                 // Load coaches and show coach selection modal
-                await openCoachSelectionModal(savedMember);
-            } else if (membershipType === 'Monthly' || membershipType === 'Annual') {
-                // Show payment modal directly for non-coach memberships
-                openPaymentModal(savedMember);
+                await openCoachSelectionModal(tempMember);
+            } else {
+                // Show payment modal directly
+                openPaymentModal(tempMember);
             }
         }
     } catch (error) {
@@ -602,35 +896,71 @@ function openPaymentModal(member) {
     document.getElementById('paymentMemberId').value = member.id;
     document.getElementById('paymentMemberName').value = member.name;
     document.getElementById('paymentMembershipType').value = member.membershipType;
+    document.getElementById('paymentIsStudent').value = member.isStudent || false;
     
     // Set display values
     document.getElementById('paymentSummaryName').textContent = member.name;
     document.getElementById('paymentSummaryType').textContent = member.membershipType;
     document.getElementById('paymentSummaryCoach').textContent = member.coachName || 'N/A';
     
-    // Set suggested amount based on membership type
-    let suggestedAmount = 0;
-    if (member.membershipType === 'Monthly') {
-        suggestedAmount = 50.00;
-        document.getElementById('paymentSummaryAmount').textContent = '$50.00 (suggested)';
+    // Set base amount based on membership type (in Philippine Peso)
+    let baseAmount = 0;
+    if (member.membershipType === 'Trial') {
+        baseAmount = 100.00;
+    } else if (member.membershipType === 'Monthly') {
+        baseAmount = 1000.00;
     } else if (member.membershipType === 'Annual') {
-        suggestedAmount = 500.00;
-        document.getElementById('paymentSummaryAmount').textContent = '$500.00 (suggested)';
+        baseAmount = 10000.00;
     } else if (member.membershipType === 'Monthly with Coach') {
-        suggestedAmount = 100.00;
-        document.getElementById('paymentSummaryAmount').textContent = '$100.00 (suggested)';
+        baseAmount = 2000.00;
     } else if (member.membershipType === 'Annual with Coach') {
-        suggestedAmount = 1000.00;
-        document.getElementById('paymentSummaryAmount').textContent = '$1000.00 (suggested)';
+        baseAmount = 20000.00;
     }
     
-    document.getElementById('paymentAmount').value = suggestedAmount;
+    // Apply student discount if applicable (10% off)
+    let finalAmount = baseAmount;
+    const studentDiscountRow = document.getElementById('studentDiscountRow');
+    
+    if (member.isStudent === true || member.isStudent === 'true') {
+        const discount = baseAmount * 0.10; // 10% discount
+        finalAmount = baseAmount - discount;
+        
+        if (studentDiscountRow) {
+            studentDiscountRow.style.display = 'flex';
+            const discountElement = document.getElementById('studentDiscountAmount');
+            if (discountElement) {
+                discountElement.textContent = '-₱' + discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+    } else {
+        if (studentDiscountRow) {
+            studentDiscountRow.style.display = 'none';
+        }
+    }
+    
+    // Format amount with comma separator
+    const formattedAmount = '₱' + finalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    document.getElementById('paymentSummaryAmount').textContent = formattedAmount;
+    document.getElementById('paymentAmount').value = formattedAmount;
     
     modal.style.display = 'block';
 }
 
 function closePaymentModal() {
-    document.getElementById('paymentModal').style.display = 'none';
+    const modal = document.getElementById('paymentModal');
+    
+    // Only allow closing after payment if member is pending (prevent skipping payment)
+    if (pendingMemberData) {
+        const confirmClose = confirm('Payment is required to complete member registration. Are you sure you want to cancel?');
+        if (!confirmClose) {
+            return; // Don't close modal
+        }
+        // If user confirms, clear pending data
+        pendingMemberData = null;
+    }
+    
+    modal.style.display = 'none';
     createdMemberData = null;
 }
 
@@ -638,9 +968,13 @@ async function processPayment() {
     const memberId = document.getElementById('paymentMemberId').value;
     const memberName = document.getElementById('paymentMemberName').value;
     const membershipType = document.getElementById('paymentMembershipType').value;
-    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    const isStudent = document.getElementById('paymentIsStudent').value === 'true';
+    const amountText = document.getElementById('paymentAmount').value;
     const paymentMethod = document.getElementById('paymentMethod').value;
     const notes = document.getElementById('paymentNotes').value.trim();
+    
+    // Parse amount (remove ₱ and commas)
+    const amount = parseFloat(amountText.replace(/[₱,]/g, ''));
     
     // Validation
     if (!amount || amount <= 0) {
@@ -654,14 +988,40 @@ async function processPayment() {
     }
     
     try {
+        // STEP 1: If this is a new member (pending), create the member first
+        let finalMemberId = memberId;
+        
+        if (memberId === 'pending' && pendingMemberData) {
+            // Create the member now
+            const memberResponse = await authenticatedFetch('/api/members', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pendingMemberData)
+            });
+            
+            if (!memberResponse.ok) {
+                const error = await memberResponse.json();
+                throw new Error(error.error || 'Failed to create member');
+            }
+            
+            const savedMember = await memberResponse.json();
+            finalMemberId = savedMember.id;
+            createdMemberData = savedMember;
+        }
+        
+        // STEP 2: Process the payment
         const paymentData = {
-            memberId: memberId,
+            memberId: finalMemberId,
             memberName: memberName,
+            membershipType: membershipType,
+            isStudent: isStudent,
             amount: amount,
             paymentMethod: paymentMethod,
             paymentDate: new Date().toISOString(),
-            membershipType: membershipType,
-            notes: notes || `Payment for ${membershipType} membership`,
+            notes: notes || `Payment for ${membershipType} membership${isStudent ? ' (Student Discount)' : ''}`,
+            description: `Payment for ${membershipType} membership`,
             status: 'completed'
         };
         
@@ -678,12 +1038,42 @@ async function processPayment() {
             throw new Error(error.error || 'Failed to process payment');
         }
         
-        showMessage('Payment processed successfully!', 'success');
+        // Clear pending data
+        pendingMemberData = null;
+        
         closePaymentModal();
+        
+        // Show success message
+        showMessage('Payment processed successfully! Member registration complete.', 'success');
+        
+        // Show success toast with animation
+        showSuccessToast('Payment Successful!', 'Payment has been processed and member is now active.');
+        
+        // Reload members to show updated status
+        await loadMembers();
     } catch (error) {
         console.error('Error processing payment:', error);
         showMessage('Error: ' + error.message, 'error');
     }
+}
+
+// Show success toast notification
+function showSuccessToast(title = 'Payment Successful!', message = 'Payment has been processed successfully.') {
+    const toast = document.getElementById('successToast');
+    
+    // Update toast content
+    const titleElement = toast.querySelector('.toast-message strong');
+    const messageElement = toast.querySelector('.toast-message p');
+    
+    if (titleElement) titleElement.textContent = title;
+    if (messageElement) messageElement.textContent = message;
+    
+    toast.classList.add('show');
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
 }
 
 // Coach Selection Modal Functions
@@ -780,35 +1170,339 @@ async function selectCoach(coachId, coachName) {
     selectedCoachId = coachId;
     selectedCoachName = coachName;
     
-    // Update member with selected coach
+    // Store coach selection in pending member data
+    if (pendingMemberData) {
+        pendingMemberData.coachId = coachId;
+        pendingMemberData.coachName = coachName;
+        
+        // Update the temp member object for display
+        if (createdMemberData && createdMemberData.id === 'pending') {
+            createdMemberData.coachId = coachId;
+            createdMemberData.coachName = coachName;
+        }
+        
+        showMessage(`Coach ${coachName} selected!`, 'success');
+        closeCoachModal();
+        
+        // Now show payment modal with coach info
+        openPaymentModal({
+            ...pendingMemberData,
+            id: 'pending',
+            coachName: coachName
+        });
+    } else {
+        // If member already exists, update them
+        try {
+            const response = await authenticatedFetch(`/api/members/${createdMemberData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ...createdMemberData,
+                    coachId: coachId,
+                    coachName: coachName
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to assign coach');
+            }
+            
+            const updatedMember = await response.json();
+            createdMemberData = updatedMember;
+            
+            showMessage(`Coach ${coachName} assigned successfully!`, 'success');
+            closeCoachModal();
+            await loadMembers();
+            
+            openPaymentModal(updatedMember);
+        } catch (error) {
+            console.error('Error assigning coach:', error);
+            showMessage('Error assigning coach: ' + error.message, 'error');
+        }
+    }
+}
+// Renew Membership Modal Functions
+function openRenewModal() {
+    const modal = document.getElementById('renewModal');
+    const form = document.getElementById('renewForm');
+    const memberSelect = document.getElementById('renewMemberSelect');
+    
+    // Reset form
+    form.reset();
+    
+    // Clear and populate member dropdown
+    memberSelect.innerHTML = '<option value="">-- Select a Member --</option>';
+    
+    // Add all members to dropdown, sorted by name (exclude Trial members)
+    const sortedMembers = [...allMembers]
+        .filter(member => member.membershipType !== 'Trial') // Exclude Trial members
+        .sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedMembers.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.id;
+        
+        // Check if expired
+        let isExpired = false;
+        if (member.expirationDate) {
+            const expDate = new Date(member.expirationDate);
+            const now = new Date();
+            if (expDate <= now) {
+                isExpired = true;
+            }
+        }
+        
+        option.textContent = `${member.name} ${member.membershipType || 'N/A'}${isExpired ? ' (EXPIRED)' : ''}`;
+        memberSelect.appendChild(option);
+    });
+    
+    // Setup event listeners
+    memberSelect.onchange = handleRenewMemberSelection;
+    document.getElementById('renewMembershipType').onchange = updateRenewPaymentSummary;
+    document.getElementById('renewIsStudent').onchange = updateRenewPaymentSummary;
+    
+    // Setup form submission
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        await processRenewal();
+    };
+    
+    modal.style.display = 'block';
+}
+
+function closeRenewModal() {
+    document.getElementById('renewModal').style.display = 'none';
+}
+
+function handleRenewMemberSelection() {
+    const memberId = document.getElementById('renewMemberSelect').value;
+    const memberInfo = document.getElementById('renewMemberInfo');
+    
+    if (!memberId) {
+        memberInfo.style.display = 'none';
+        document.getElementById('renewPaymentInfo').style.display = 'none';
+        document.getElementById('renewPaymentFields').style.display = 'none';
+        return;
+    }
+    
+    // Find selected member
+    const member = allMembers.find(m => m.id === memberId);
+    if (!member) return;
+    
+    // Display member info
+    document.getElementById('renewInfoName').textContent = member.name;
+    document.getElementById('renewInfoType').textContent = member.membershipType || 'N/A';
+    
+    // Check if expired
+    let statusText = member.status || 'active';
+    let statusColor = '#4CAF50';
+    if (member.expirationDate) {
+        const expDate = new Date(member.expirationDate);
+        const now = new Date();
+        if (expDate <= now) {
+            statusText = 'expired';
+            statusColor = '#f44336';
+        }
+    }
+    
+    const statusSpan = document.getElementById('renewInfoStatus');
+    statusSpan.textContent = statusText;
+    statusSpan.style.color = statusColor;
+    statusSpan.style.fontWeight = 'bold';
+    statusSpan.style.textTransform = 'uppercase';
+    
+    document.getElementById('renewInfoExpiration').textContent = member.expirationDate ? formatDate(member.expirationDate) : 'N/A';
+    
+    memberInfo.style.display = 'block';
+    
+    // Update payment summary if membership type is selected
+    updateRenewPaymentSummary();
+}
+
+function updateRenewPaymentSummary() {
+    const membershipType = document.getElementById('renewMembershipType').value;
+    const isStudent = document.getElementById('renewIsStudent').checked;
+    const paymentInfo = document.getElementById('renewPaymentInfo');
+    const paymentFields = document.getElementById('renewPaymentFields');
+    
+    if (!membershipType) {
+        paymentInfo.style.display = 'none';
+        paymentFields.style.display = 'none';
+        return;
+    }
+    
+    // Calculate base amount
+    let baseAmount = 0;
+    if (membershipType === 'Monthly') {
+        baseAmount = 1000.00;
+    } else if (membershipType === 'Annual') {
+        baseAmount = 10000.00;
+    } else if (membershipType === 'Monthly with Coach') {
+        baseAmount = 2000.00;
+    } else if (membershipType === 'Annual with Coach') {
+        baseAmount = 20000.00;
+    }
+    
+    // Apply student discount
+    let discount = 0;
+    let finalAmount = baseAmount;
+    if (isStudent) {
+        discount = baseAmount * 0.10;
+        finalAmount = baseAmount - discount;
+    }
+    
+    // Update display
+    document.getElementById('renewBaseAmount').textContent = '₱' + baseAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    const discountRow = document.getElementById('renewDiscountRow');
+    if (isStudent) {
+        discountRow.style.display = 'flex';
+        document.getElementById('renewDiscountAmount').textContent = '-₱' + discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } else {
+        discountRow.style.display = 'none';
+    }
+    
+    document.getElementById('renewTotalAmount').textContent = '₱' + finalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    paymentInfo.style.display = 'block';
+    paymentFields.style.display = 'block';
+}
+
+async function processRenewal() {
+    const memberId = document.getElementById('renewMemberSelect').value;
+    const membershipType = document.getElementById('renewMembershipType').value;
+    const isStudent = document.getElementById('renewIsStudent').checked;
+    const paymentMethod = document.getElementById('renewPaymentMethod').value;
+    const notes = document.getElementById('renewPaymentNotes').value.trim();
+    
+    // Validation
+    if (!memberId) {
+        showMessage('Please select a member to renew', 'error');
+        return;
+    }
+    
+    if (!membershipType) {
+        showMessage('Please select a membership type', 'error');
+        return;
+    }
+    
+    if (!paymentMethod) {
+        showMessage('Please select a payment method', 'error');
+        return;
+    }
+    
+    // Find member
+    const member = allMembers.find(m => m.id === memberId);
+    if (!member) {
+        showMessage('Member not found', 'error');
+        return;
+    }
+    
+    // Calculate amount
+    let baseAmount = 0;
+    if (membershipType === 'Monthly') {
+        baseAmount = 1000.00;
+    } else if (membershipType === 'Annual') {
+        baseAmount = 10000.00;
+    } else if (membershipType === 'Monthly with Coach') {
+        baseAmount = 2000.00;
+    } else if (membershipType === 'Annual with Coach') {
+        baseAmount = 20000.00;
+    }
+    
+    let finalAmount = baseAmount;
+    if (isStudent) {
+        const discount = baseAmount * 0.10;
+        finalAmount = baseAmount - discount;
+    }
+    
     try {
-        const response = await authenticatedFetch(`/api/members/${createdMemberData.id}`, {
+        // Calculate new expiration date
+        let newExpirationDate;
+        const currentExpDate = member.expirationDate ? new Date(member.expirationDate) : new Date();
+        const now = new Date();
+        
+        // If current membership is expired, start from today
+        const startDate = currentExpDate > now ? currentExpDate : now;
+        
+        if (membershipType === 'Monthly' || membershipType === 'Monthly with Coach') {
+            newExpirationDate = new Date(startDate);
+            newExpirationDate.setMonth(newExpirationDate.getMonth() + 1);
+        } else if (membershipType === 'Annual' || membershipType === 'Annual with Coach') {
+            newExpirationDate = new Date(startDate);
+            newExpirationDate.setFullYear(newExpirationDate.getFullYear() + 1);
+        }
+        
+        // Update member with new membership type and expiration date
+        const updateData = {
+            membershipType: membershipType,
+            expirationDate: newExpirationDate.toISOString(),
+            status: 'active',
+            isStudent: isStudent
+        };
+        
+        // If coach-based membership, keep existing coach or require selection
+        if (membershipType === 'Monthly with Coach' || membershipType === 'Annual with Coach') {
+            if (member.coachId) {
+                updateData.coachId = member.coachId;
+                updateData.coachName = member.coachName;
+            }
+        }
+        
+        const memberResponse = await authenticatedFetch(`/api/members/${memberId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                ...createdMemberData,
-                coachId: coachId,
-                coachName: coachName
-            })
+            body: JSON.stringify(updateData)
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to assign coach');
+        if (!memberResponse.ok) {
+            const error = await memberResponse.json();
+            throw new Error(error.error || 'Failed to update member');
         }
         
-        const updatedMember = await response.json();
-        createdMemberData = updatedMember;
+        // Process payment
+        const paymentData = {
+            memberId: memberId,
+            memberName: member.name,
+            membershipType: membershipType,
+            isStudent: isStudent,
+            amount: finalAmount,
+            paymentMethod: paymentMethod,
+            paymentDate: new Date().toISOString(),
+            notes: notes || `Membership renewal - ${membershipType}${isStudent ? ' (Student Discount)' : ''}`,
+            description: `Membership renewal for ${membershipType}`,
+            status: 'completed'
+        };
         
-        showMessage(`Coach ${coachName} assigned successfully!`, 'success');
-        closeCoachModal();
-        await loadMembers(); // Reload to show updated coach
+        const paymentResponse = await authenticatedFetch('/api/payments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
         
-        // Now show payment modal
-        openPaymentModal(updatedMember);
+        if (!paymentResponse.ok) {
+            const error = await paymentResponse.json();
+            throw new Error(error.error || 'Failed to process payment');
+        }
+        
+        closeRenewModal();
+        
+        // Show success message
+        showMessage(`Membership renewed successfully for ${member.name}!`, 'success');
+        
+        // Show success toast
+        showSuccessToast('Renewal Successful!', `${member.name}'s membership has been renewed until ${formatDate(newExpirationDate)}`);
+        
+        // Reload members
+        await loadMembers();
     } catch (error) {
-        console.error('Error assigning coach:', error);
-        showMessage('Error assigning coach: ' + error.message, 'error');
+        console.error('Error processing renewal:', error);
+        showMessage('Error: ' + error.message, 'error');
     }
 }

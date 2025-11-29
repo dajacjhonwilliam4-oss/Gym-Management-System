@@ -13,6 +13,13 @@ public class Payment
     [BsonRepresentation(BsonType.ObjectId)]
     public string MemberId { get; set; } = string.Empty;
 
+    [BsonElement("memberName")]
+    public string MemberName { get; set; } = string.Empty;
+
+    [BsonElement("membershipType")]
+    [BsonIgnoreIfNull]
+    public string? MembershipType { get; set; }
+
     [BsonElement("amount")]
     public decimal Amount { get; set; }
 
@@ -27,6 +34,13 @@ public class Payment
 
     [BsonElement("description")]
     public string? Description { get; set; }
+
+    [BsonElement("notes")]
+    [BsonIgnoreIfNull]
+    public string? Notes { get; set; }
+
+    [BsonElement("isStudent")]
+    public bool IsStudent { get; set; } = false;
 
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

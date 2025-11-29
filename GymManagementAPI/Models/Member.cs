@@ -51,6 +51,9 @@ public class Member
     [BsonIgnoreIfNull]
     public string? CoachName { get; set; }
 
+    [BsonElement("isStudent")]
+    public bool IsStudent { get; set; } = false;
+
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

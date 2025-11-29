@@ -60,4 +60,22 @@ public class PaymentsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        try
+        {
+            var result = await _paymentService.DeleteAsync(id);
+            if (!result)
+            {
+                return NotFound(new { error = "Payment not found" });
+            }
+            return Ok(new { message = "Payment deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }

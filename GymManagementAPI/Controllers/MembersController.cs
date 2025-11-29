@@ -11,10 +11,12 @@ namespace GymManagementAPI.Controllers;
 public class MembersController : ControllerBase
 {
     private readonly IMemberService _memberService;
+    private readonly IUserService _userService;
 
-    public MembersController(IMemberService memberService)
+    public MembersController(IMemberService memberService, IUserService userService)
     {
         _memberService = memberService;
+        _userService = userService;
     }
 
     [HttpGet]
@@ -56,6 +58,41 @@ public class MembersController : ControllerBase
         try
         {
             var createdMember = await _memberService.CreateAsync(member);
+            
+            // Auto-create user account for non-trial members
+            if (!string.IsNullOrEmpty(member.Email) && 
+                !member.Email.Contains("@trial.local") && 
+                member.MembershipType?.ToLower() != "trial")
+            {
+                try
+                {
+                    // Check if user already exists
+                    var existingUsers = await _userService.GetAllAsync();
+                    var userExists = existingUsers.Any(u => u.Email == member.Email);
+                    
+                    if (!userExists)
+                    {
+                        // Create user account with default password
+                        var user = new User
+                        {
+                            Name = member.Name,
+                            Email = member.Email,
+                            Password = "member123", // Default password (will be hashed)
+                            Role = "member",
+                            AuthProvider = "local",
+                            IsActive = true
+                        };
+                        
+                        await _userService.CreateAsync(user);
+                    }
+                }
+                catch (Exception userEx)
+                {
+                    // Log but don't fail member creation if user creation fails
+                    Console.WriteLine($"Failed to create user account: {userEx.Message}");
+                }
+            }
+            
             return StatusCode(201, createdMember);
         }
         catch (Exception ex)

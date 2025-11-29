@@ -79,9 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'coach':
         return '/schedules.html';
       case 'member':
-        return '/dashboard.html';
+        return '/coaches.html';
       default:
-        return '/dashboard.html';
+        return '/coaches.html';
     }
   }
 
@@ -158,7 +158,7 @@ function handleCredentialResponse(response) {
       messageDiv.classList.remove('hidden');
       
       setTimeout(() => {
-        window.location.href = data.user.role === 'admin' ? '/dashboard.html' : '/dashboard.html';
+        window.location.href = getDashboardUrl(data.user.role);
       }, 1000);
     } else {
       throw new Error(data.error || 'Google login failed');
