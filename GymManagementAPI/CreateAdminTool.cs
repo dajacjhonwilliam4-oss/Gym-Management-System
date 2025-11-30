@@ -15,7 +15,7 @@ public class CreateAdminTool
         Console.WriteLine("║     Admin Account Creation Tool       ║");
         Console.WriteLine("╚════════════════════════════════════════╝\n");
 
-        var connectionString = "mongodb://localhost:27017";
+        var connectionString = "mongodb+srv://UserFor_All:CYcLOapsCYGu68Q7@gymmanagement.gzqjhpb.mongodb.net/gym_management?retryWrites=true&w=majority";
         var client = new MongoClient(connectionString);
         var database = client.GetDatabase("gym_management");
         var usersCollection = database.GetCollection<User>("users");
